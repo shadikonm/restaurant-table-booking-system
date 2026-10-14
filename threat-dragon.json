@@ -1,0 +1,901 @@
+{
+  "version": "2.6.2",
+  "summary": {
+    "title": "Система бронирования: администратор",
+    "owner": "Акимгереева Шадияра",
+    "description": "Проектная STRIDE-модель; меры не подтверждены; 02.10.2026; SQLite подтверждена по ZIP; дефекты I04–I10 в code-audit.md",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [
+      {
+        "name": "Акимгереева Шадияра"
+      },
+      {
+        "name": "Алпысбаева Жанерке"
+      },
+      {
+        "name": "Ахметова Зарина"
+      }
+    ],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Admin authentication",
+        "diagramType": "STRIDE",
+        "version": "2.6.2",
+        "cells": [
+          {
+            "position": {
+              "x": 350,
+              "y": 150
+            },
+            "size": {
+              "width": 240,
+              "height": 250
+            },
+            "attrs": {
+              "label": {
+                "text": "Сервер приложения"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "zIndex": -1,
+            "id": "836eebcb-42d4-47ae-85eb-434a33becad9",
+            "data": {
+              "type": "tm.BoundaryBox",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false,
+              "containedElements": [
+                "9dfb3251-1b0d-4b73-bc7e-fec9181a8325"
+              ],
+              "crossingFlows": [
+                "124d637f-1710-4adb-996f-371ec231afc6",
+                "bab1be5a-829d-456f-8368-55431ec6b62d",
+                "fa835576-e1b4-4651-a830-81d1ef37254b"
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 730,
+              "y": 150
+            },
+            "size": {
+              "width": 260,
+              "height": 250
+            },
+            "attrs": {
+              "label": {
+                "text": "Хранилище"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "zIndex": -1,
+            "id": "5e4a26f4-3640-412b-ae41-be19bdd19240",
+            "data": {
+              "type": "tm.BoundaryBox",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false,
+              "containedElements": [
+                "7791e37e-2c3c-4de0-b4ac-417d06d083ec"
+              ],
+              "crossingFlows": [
+                "fa835576-e1b4-4651-a830-81d1ef37254b"
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 50,
+              "y": 110
+            },
+            "size": {
+              "width": 130,
+              "height": 120
+            },
+            "attrs": {
+              "text": {
+                "text": "Клиент / атакующий"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "1099a13a-80f8-4e29-8747-acdf5d0f83f9"
+                },
+                {
+                  "group": "right",
+                  "id": "bedbb764-d505-4937-852b-150f4115f25d"
+                },
+                {
+                  "group": "bottom",
+                  "id": "6db21897-b788-41ba-8e7e-159a17fddfeb"
+                },
+                {
+                  "group": "left",
+                  "id": "2005b935-d71c-4970-85b5-be05f8c2ecd2"
+                }
+              ]
+            },
+            "id": "cd52c17a-abdf-472c-a56f-7cff989a5f3c",
+            "data": {
+              "type": "tm.Actor",
+              "name": "Клиент / атакующий",
+              "description": "Клиент / атакующий",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": "",
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 50,
+              "y": 310
+            },
+            "size": {
+              "width": 130,
+              "height": 120
+            },
+            "attrs": {
+              "text": {
+                "text": "Администратор"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "1099a13a-80f8-4e29-8747-acdf5d0f83f9"
+                },
+                {
+                  "group": "right",
+                  "id": "bedbb764-d505-4937-852b-150f4115f25d"
+                },
+                {
+                  "group": "bottom",
+                  "id": "6db21897-b788-41ba-8e7e-159a17fddfeb"
+                },
+                {
+                  "group": "left",
+                  "id": "2005b935-d71c-4970-85b5-be05f8c2ecd2"
+                }
+              ]
+            },
+            "id": "d9eca4a3-f9ce-4bf0-83eb-d40d9f664b26",
+            "data": {
+              "type": "tm.Actor",
+              "name": "Администратор",
+              "description": "Администратор",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": "",
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 420,
+              "y": 220
+            },
+            "size": {
+              "width": 130,
+              "height": 120
+            },
+            "attrs": {
+              "text": {
+                "text": "Flask admin / вход"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 2.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "1099a13a-80f8-4e29-8747-acdf5d0f83f9"
+                },
+                {
+                  "group": "right",
+                  "id": "bedbb764-d505-4937-852b-150f4115f25d"
+                },
+                {
+                  "group": "bottom",
+                  "id": "6db21897-b788-41ba-8e7e-159a17fddfeb"
+                },
+                {
+                  "group": "left",
+                  "id": "2005b935-d71c-4970-85b5-be05f8c2ecd2"
+                }
+              ]
+            },
+            "id": "9dfb3251-1b0d-4b73-bc7e-fec9181a8325",
+            "data": {
+              "type": "tm.Process",
+              "name": "Flask admin / вход",
+              "description": "Flask admin / вход",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": "",
+              "threats": [
+                {
+                  "id": "ce31c79c-4f52-41e7-9ce8-d3f221f4c27b",
+                  "number": 1,
+                  "title": "Подбор/подделка сессии администратора",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Spoofing",
+                  "description": "Пароль либо подпись cookie позволяют выдавать себя за администратора; RAID: R05/R06/R10",
+                  "mitigation": "Хеш пароля, случайный ключ из окружения, лимиты входа, Secure/HttpOnly/SameSite и HTTPS; SEC-01; владелец: Ахметова Зарина; статус: запланирована",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "score": ""
+                },
+                {
+                  "id": "18a82ffa-48de-4728-ac1d-8e19477acde6",
+                  "number": 2,
+                  "title": "Подмена запроса изменения брони",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Tampering",
+                  "description": "Атакующий меняет ID, статус или выполняет CSRF-запрос; RAID: R07/R09",
+                  "mitigation": "Серверная проверка роли, CSRF, валидация, параметризованные запросы; SEC-01; владелец: Ахметова Зарина; статус: запланирована",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "score": ""
+                },
+                {
+                  "id": "0d63e9cf-63d0-476e-9d80-4f7bf099d452",
+                  "number": 3,
+                  "title": "Отрицание изменения статуса",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Repudiation",
+                  "description": "Администратор отрицает отмену; журнал не определяет автора; RAID: R21",
+                  "mitigation": "Аудит: ID администратора, UTC-время, ID брони, действие, результат; ограничение записи/чтения; SEC-01; владелец: Ахметова Зарина; статус: запланирована",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "score": ""
+                },
+                {
+                  "id": "0f1b7cbf-34cc-4fa0-bc87-fe3ed66b1aee",
+                  "number": 4,
+                  "title": "Раскрытие имён и телефонов",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Information disclosure",
+                  "description": "Неавторизованный пользователь читает список либо логи броней; RAID: R11/R19",
+                  "mitigation": "Минимальный публичный ответ, контроль доступа, маскирование логов, HTTPS; SEC-01/SEC-03; владелец: Ахметова Зарина; статус: запланирована",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "score": ""
+                },
+                {
+                  "id": "f8a56cac-c3be-46b7-bdde-0b022a38f685",
+                  "number": 5,
+                  "title": "Поток запросов входа и списка",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Denial of service",
+                  "description": "Неограниченные запросы расходуют CPU и соединения БД; RAID: R10",
+                  "mitigation": "Лимиты запросов, пагинация, таймауты, индексы и ограниченный пул БД; SEC-01; владелец: Ахметова Зарина; статус: запланирована",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "score": ""
+                },
+                {
+                  "id": "17ea9e59-fa62-4679-9919-b0318b7f692f",
+                  "number": 6,
+                  "title": "Обход прав администратора",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Elevation of privilege",
+                  "description": "Клиент вызывает admin-маршрут напрямую или меняет cookie роли; RAID: R05",
+                  "mitigation": "Роль определяется сервером; deny by default на каждом маршруте и проверки 401/403; SEC-01; владелец: Ахметова Зарина; статус: запланирована",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "score": ""
+                }
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 800,
+              "y": 220
+            },
+            "size": {
+              "width": 130,
+              "height": 120
+            },
+            "attrs": {
+              "text": {
+                "text": "SQLite: restaurant.db"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "1099a13a-80f8-4e29-8747-acdf5d0f83f9"
+                },
+                {
+                  "group": "right",
+                  "id": "bedbb764-d505-4937-852b-150f4115f25d"
+                },
+                {
+                  "group": "bottom",
+                  "id": "6db21897-b788-41ba-8e7e-159a17fddfeb"
+                },
+                {
+                  "group": "left",
+                  "id": "2005b935-d71c-4970-85b5-be05f8c2ecd2"
+                }
+              ]
+            },
+            "id": "7791e37e-2c3c-4de0-b4ac-417d06d083ec",
+            "data": {
+              "type": "tm.Store",
+              "name": "SQLite: restaurant.db",
+              "description": "БД: учётные записи / брони",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": "",
+              "threats": []
+            }
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "F1: вход / cookie",
+              "description": "",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": true,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "требует проверки",
+              "threats": [],
+              "trustBoundaryIds": [
+                "836eebcb-42d4-47ae-85eb-434a33becad9"
+              ]
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "Data Flow"
+                  },
+                  "labelText": {
+                    "text": "F1: вход / cookie",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "id": "124d637f-1710-4adb-996f-371ec231afc6",
+            "source": {
+              "cell": "cd52c17a-abdf-472c-a56f-7cff989a5f3c"
+            },
+            "target": {
+              "cell": "9dfb3251-1b0d-4b73-bc7e-fec9181a8325"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "F1: admin-запросы",
+              "description": "",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": true,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "требует проверки",
+              "threats": [],
+              "trustBoundaryIds": [
+                "836eebcb-42d4-47ae-85eb-434a33becad9"
+              ]
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "Data Flow"
+                  },
+                  "labelText": {
+                    "text": "F1: admin-запросы",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "id": "bab1be5a-829d-456f-8368-55431ec6b62d",
+            "source": {
+              "cell": "d9eca4a3-f9ce-4bf0-83eb-d40d9f664b26"
+            },
+            "target": {
+              "cell": "9dfb3251-1b0d-4b73-bc7e-fec9181a8325"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "F2: чтение / запись",
+              "description": "",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": true,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "требует проверки",
+              "threats": [],
+              "trustBoundaryIds": [
+                "836eebcb-42d4-47ae-85eb-434a33becad9",
+                "5e4a26f4-3640-412b-ae41-be19bdd19240"
+              ]
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "Data Flow"
+                  },
+                  "labelText": {
+                    "text": "F2: чтение / запись",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "id": "fa835576-e1b4-4651-a830-81d1ef37254b",
+            "source": {
+              "cell": "9dfb3251-1b0d-4b73-bc7e-fec9181a8325"
+            },
+            "target": {
+              "cell": "7791e37e-2c3c-4de0-b4ac-417d06d083ec"
+            },
+            "vertices": []
+          }
+        ]
+      }
+    ],
+    "diagramTop": 1,
+    "threatTop": 6,
+    "reviewer": "Алпысбаева Жанерке"
+  }
+}
