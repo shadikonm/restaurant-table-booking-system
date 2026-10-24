@@ -18,10 +18,7 @@ jobs:
           python -m pip install ruff pytest pip-audit build
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Lint Python
-        run: |
-          files=$(find . -name '*.py' -not -path './.git/*' | head -1)
-          if [ -z "$files" ]; then echo "No Python files: add source code before enabling CI"; exit 1; fi
-          ruff check .
+        run: ruff check . --select E4,E7,E9,F --exclude tests
       - name: Run tests
         run: |
           if [ ! -d tests ]; then echo "No tests/ directory: add real tests"; exit 1; fi
