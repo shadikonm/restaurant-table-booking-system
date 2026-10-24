@@ -1,0 +1,40 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install tools and project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff pytest pip-audit build
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint Python
+        run: |
+          files=$(find . -name '*.py' -not -path './.git/*' | head -1)
+          if [ -z "$files" ]; then echo "No Python files: add source code before enabling CI"; exit 1; fi
+          ruff check .
+      - name: Run tests
+        run: |
+          if [ ! -d tests ]; then echo "No tests/ directory: add real tests"; exit 1; fi
+          pytest -q
+      - name: Dependency audit
+        run: |
+          if [ ! -f requirements.txt ]; then echo "requirements.txt missing"; exit 1; fi
+          pip-audit -r requirements.txt
+      - name: Build artifact
+        run: |
+          mkdir -p dist
+          tar --exclude=.git --exclude=dist -czf dist/source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: restaurant-source
+          path: dist/source.tar.gz
