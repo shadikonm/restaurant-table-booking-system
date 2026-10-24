@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>TABLE — Регистрация</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/user_auth.css') }}"
+    >
+</head>
+
+<body>
+
+<header class="auth-header">
+
+    <a
+        href="{{ url_for('home') }}"
+        class="logo"
+    >
+        TABLE
+    </a>
+
+    <div class="header-actions">
+
+        <a href="{{ url_for('home') }}">
+            На сайт
+        </a>
+
+        <a href="{{ url_for('user_login') }}">
+            Войти
+        </a>
+
+    </div>
+
+</header>
+
+
+<main class="auth-page">
+
+    <section class="auth-intro">
+
+        <p class="eyebrow">
+            ЛИЧНЫЙ КАБИНЕТ
+        </p>
+
+        <h1>
+            Регистрация
+        </h1>
+
+        <p class="auth-description">
+            Создайте аккаунт, чтобы новые бронирования
+            автоматически сохранялись в личном кабинете.
+        </p>
+
+    </section>
+
+
+    <section class="auth-card">
+
+        <h2 class="auth-card-title">
+            Создать аккаунт
+        </h2>
+
+
+        {% if error %}
+
+            <div class="auth-error">
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+
+        <form
+            method="POST"
+            class="auth-form"
+        >
+
+            <!-- ИМЯ -->
+
+            <div class="form-group">
+
+                <label for="name">
+                    Имя
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    minlength="2"
+                    maxlength="50"
+                    placeholder="Например, Шадияра"
+                    autocomplete="name"
+                    required
+                >
+
+            </div>
+
+
+            <!-- ТЕЛЕФОН -->
+
+            <div class="form-group">
+
+                <label for="phone">
+                    Телефон
+                </label>
+
+                <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    placeholder="+7 777 123 45 67"
+                    autocomplete="tel"
+                    required
+                >
+
+            </div>
+
+
+            <!-- EMAIL -->
+
+            <div class="form-group">
+
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="name@example.com"
+                    autocomplete="email"
+                    required
+                >
+
+            </div>
+
+
+            <!-- ПАРОЛЬ -->
+
+            <div class="form-group">
+
+                <label for="password">
+                    Пароль
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    minlength="6"
+                    placeholder="Минимум 6 символов"
+                    autocomplete="new-password"
+                    required
+                >
+
+            </div>
+
+
+            <!-- ПОВТОР ПАРОЛЯ -->
+
+            <div class="form-group">
+
+                <label for="password2">
+                    Повторите пароль
+                </label>
+
+                <input
+                    type="password"
+                    id="password2"
+                    name="password2"
+                    minlength="6"
+                    placeholder="Повторите пароль"
+                    autocomplete="new-password"
+                    required
+                >
+
+            </div>
+
+
+            <!-- КНОПКА -->
+
+            <button
+                type="submit"
+                class="auth-submit"
+            >
+                Зарегистрироваться
+            </button>
+
+        </form>
+
+
+        <div class="auth-footer">
+
+            Уже есть аккаунт?
+
+            <a href="{{ url_for('user_login') }}">
+                Войти
+            </a>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

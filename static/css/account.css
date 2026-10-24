@@ -1,0 +1,881 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    min-height: 100vh;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: #f5f3ee;
+
+    color: #242424;
+}
+
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+
+/* =========================================
+   HEADER
+   ========================================= */
+
+.account-header {
+    min-height: 86px;
+
+    padding: 0 6%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background: #171717;
+}
+
+
+.logo {
+    color: #ffffff;
+
+    font-size: 22px;
+    font-weight: bold;
+
+    letter-spacing: 5px;
+
+    text-decoration: none;
+}
+
+
+.header-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.header-actions a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 0 16px;
+
+    border: 1px solid #555555;
+
+    color: #ffffff;
+
+    font-size: 12px;
+
+    transition: 0.2s;
+}
+
+
+.header-actions a:hover {
+    border-color: #a1845c;
+
+    color: #d6bd99;
+}
+
+
+/* =========================================
+   MAIN
+   ========================================= */
+
+.account-container {
+    width: 90%;
+
+    max-width: 1180px;
+
+    margin: 55px auto 100px;
+}
+
+
+/* =========================================
+   ACCOUNT TITLE
+   ========================================= */
+
+.account-title {
+    margin-bottom: 32px;
+}
+
+
+.eyebrow {
+    color: #a1845c;
+
+    font-size: 10px;
+    font-weight: bold;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 10px;
+}
+
+
+.account-title h1 {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 44px;
+
+    font-weight: normal;
+
+    line-height: 1.1;
+
+    margin-bottom: 12px;
+}
+
+
+.account-description {
+    color: #777777;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================
+   PROFILE
+   ========================================= */
+
+.profile-card {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    background: #ffffff;
+
+    border: 1px solid #e4dfd7;
+
+    margin-bottom: 55px;
+}
+
+
+.profile-item {
+    min-width: 0;
+
+    padding: 24px 26px;
+
+    border-right:
+        1px solid #e4dfd7;
+}
+
+
+.profile-item:last-child {
+    border-right: none;
+}
+
+
+.profile-item span {
+    display: block;
+
+    color: #999999;
+
+    font-size: 9px;
+    font-weight: bold;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1.2px;
+
+    margin-bottom: 9px;
+}
+
+
+.profile-item strong {
+    display: block;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================
+   RESERVATIONS
+   ========================================= */
+
+.reservations-section {
+    margin-top: 20px;
+}
+
+
+.section-heading {
+    display: flex;
+
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 22px;
+}
+
+
+.section-heading h2 {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 32px;
+
+    font-weight: normal;
+}
+
+
+/* =========================================
+   NEW BOOKING
+   ========================================= */
+
+.new-booking-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 44px;
+
+    padding: 0 20px;
+
+    background: #a1845c;
+
+    border: 1px solid #a1845c;
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: bold;
+
+    letter-spacing: 0.4px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.new-booking-button:hover {
+    background: #806746;
+
+    border-color: #806746;
+}
+
+
+/* =========================================
+   LIST
+   ========================================= */
+
+.reservations-list {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+
+/* =========================================
+   CARD
+   ========================================= */
+
+.reservation-card {
+    display: flex;
+
+    flex-direction: column;
+
+    background: #ffffff;
+
+    border: 1px solid #e4dfd7;
+
+    padding: 27px;
+
+    transition: 0.2s;
+}
+
+
+.reservation-card:hover {
+    border-color: #c8baa4;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 30px
+        rgba(0, 0, 0, 0.05);
+}
+
+
+/* =========================================
+   CARD HEADER
+   ========================================= */
+
+.reservation-top {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid #eeeeee;
+}
+
+
+.reservation-number {
+    display: block;
+
+    color: #a1845c;
+
+    font-size: 9px;
+
+    font-weight: bold;
+
+    letter-spacing: 1.4px;
+
+    margin-bottom: 8px;
+}
+
+
+.reservation-top h3 {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 27px;
+
+    font-weight: normal;
+}
+
+
+/* =========================================
+   STATUS
+   ========================================= */
+
+.status {
+    display: inline-flex;
+
+    align-items: center;
+
+    min-height: 28px;
+
+    padding: 0 11px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+
+    white-space: nowrap;
+}
+
+
+.status-confirmed {
+    background: #e7eee3;
+
+    color: #506348;
+}
+
+
+.status-arrived {
+    background: #e3e9f1;
+
+    color: #4e6177;
+}
+
+
+.status-completed {
+    background: #ece9e3;
+
+    color: #71695d;
+}
+
+
+.status-cancelled {
+    background: #eeeeee;
+
+    color: #888888;
+}
+
+
+/* =========================================
+   RESERVATION DETAILS
+   ========================================= */
+
+.reservation-details {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 1px;
+
+    background: #e8e4dd;
+
+    margin-top: 20px;
+}
+
+
+.detail-item {
+    min-width: 0;
+
+    background: #f8f6f2;
+
+    padding: 16px;
+}
+
+
+.detail-item span {
+    display: block;
+
+    color: #999999;
+
+    font-size: 9px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 7px;
+}
+
+
+.detail-item strong {
+    display: block;
+
+    font-size: 13px;
+
+    line-height: 1.4;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================
+   PAYMENT BOX
+   ========================================= */
+
+.payment-box {
+    margin-top: 20px;
+
+    padding: 18px;
+
+    background: #faf8f4;
+
+    border: 1px solid #e8e2d9;
+}
+
+
+.payment-box-paid {
+    background: #f4f7f1;
+
+    border-color: #dbe5d5;
+}
+
+
+.payment-box-refunded {
+    background: #f5f5f5;
+
+    border-color: #dddddd;
+}
+
+
+.payment-main {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+.payment-label {
+    display: block;
+
+    color: #999999;
+
+    font-size: 9px;
+
+    font-weight: bold;
+
+    letter-spacing: 1.3px;
+
+    margin-bottom: 7px;
+}
+
+
+.payment-status {
+    display: block;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 19px;
+
+    font-weight: normal;
+}
+
+
+.payment-status.unpaid {
+    color: #806746;
+}
+
+
+.payment-status.paid {
+    color: #506348;
+}
+
+
+.payment-status.refunded {
+    color: #777777;
+}
+
+
+.payment-price {
+    text-align: right;
+}
+
+
+.payment-price span {
+    display: block;
+
+    color: #999999;
+
+    font-size: 9px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 6px;
+}
+
+
+.payment-price strong {
+    display: block;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 19px;
+
+    font-weight: normal;
+}
+
+
+.payment-description {
+    color: #888888;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+
+    margin-top: 13px;
+}
+
+
+.payment-extra {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 6px 15px;
+
+    padding-top: 13px;
+
+    margin-top: 13px;
+
+    border-top:
+        1px solid
+        rgba(0, 0, 0, 0.07);
+
+    color: #777777;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================
+   ACTIONS
+   ========================================= */
+
+.reservation-actions {
+    margin-top: auto;
+
+    padding-top: 18px;
+}
+
+
+.pay-button {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+
+    min-height: 46px;
+
+    padding: 0 18px;
+
+    background: #a1845c;
+
+    border: 1px solid #a1845c;
+
+    color: #ffffff;
+
+    font-size: 11px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.pay-button:hover {
+    background: #806746;
+
+    border-color: #806746;
+}
+
+
+.cancel-form {
+    width: 100%;
+
+    margin-top: 10px;
+}
+
+
+.cancel-button {
+    width: 100%;
+
+    min-height: 44px;
+
+    padding: 0 18px;
+
+    border: 1px solid #d4c2b9;
+
+    background: #ffffff;
+
+    color: #875d50;
+
+    font-size: 11px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.cancel-button:hover {
+    background: #875d50;
+
+    border-color: #875d50;
+
+    color: #ffffff;
+}
+
+
+/* =========================================
+   EMPTY
+   ========================================= */
+
+.empty-state {
+    background: #ffffff;
+
+    border: 1px solid #e4dfd7;
+
+    padding: 65px 30px;
+
+    text-align: center;
+}
+
+
+.empty-icon {
+    color: #a1845c;
+
+    font-family:
+        Georgia,
+        serif;
+
+    font-size: 40px;
+
+    margin-bottom: 12px;
+}
+
+
+.empty-state h3 {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 27px;
+
+    font-weight: normal;
+
+    margin-bottom: 10px;
+}
+
+
+.empty-state p {
+    max-width: 430px;
+
+    margin:
+        0 auto
+        25px;
+
+    color: #888888;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    .profile-card {
+        grid-template-columns: 1fr;
+    }
+
+
+    .profile-item {
+        border-right: none;
+
+        border-bottom:
+            1px solid #e4dfd7;
+    }
+
+
+    .profile-item:last-child {
+        border-bottom: none;
+    }
+
+
+    .reservations-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .account-header {
+        min-height: 76px;
+
+        padding: 0 5%;
+    }
+
+
+    .logo {
+        font-size: 19px;
+
+        letter-spacing: 4px;
+    }
+
+
+    .header-actions {
+        gap: 7px;
+    }
+
+
+    .header-actions a {
+        min-height: 36px;
+
+        padding: 0 10px;
+
+        font-size: 10px;
+    }
+
+
+    .account-container {
+        width: 92%;
+
+        margin-top: 35px;
+    }
+
+
+    .account-title h1 {
+        font-size: 34px;
+    }
+
+
+    .section-heading {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+
+    .new-booking-button {
+        width: 100%;
+    }
+
+
+    .reservation-card {
+        padding: 20px;
+    }
+
+
+    .reservation-top {
+        flex-direction: column;
+    }
+
+
+    .reservation-details {
+        grid-template-columns: 1fr;
+    }
+
+
+    .payment-main {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .payment-price {
+        text-align: left;
+    }
+}

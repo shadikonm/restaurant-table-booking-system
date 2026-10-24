@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TABLE — Администратор</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin.css') }}"
+    >
+</head>
+
+<body>
+
+<header class="admin-header">
+
+    <a href="/" class="logo">
+        TABLE
+    </a>
+
+    <nav class="admin-nav">
+
+        <button
+            type="button"
+            class="nav-tab active"
+            data-section="dashboardSection"
+        >
+            Дашборд
+        </button>
+
+        <button
+            type="button"
+            class="nav-tab"
+            data-section="bookingsSection"
+        >
+            Бронирования
+        </button>
+
+        <button
+            type="button"
+            class="nav-tab"
+            data-section="tablesSection"
+        >
+            Столики
+        </button>
+
+        <button
+            type="button"
+            class="nav-tab"
+            data-section="reportsSection"
+        >
+            Отчёты
+        </button>
+
+        <button
+            type="button"
+            class="nav-tab"
+            data-section="preordersSection"
+        >
+            Предзаказы
+
+            <span
+                id="preordersNavCount"
+                class="nav-count"
+            >
+                0
+            </span>
+        </button>
+
+
+        <button type="button" class="nav-tab" data-section="logsSection">
+            Журнал действий
+        </button>
+
+    </nav>
+
+    <div class="header-actions">
+
+        <span class="admin-name">
+            {{ admin_username }}
+        </span>
+
+        <a href="/">
+            На сайт
+        </a>
+
+        <a href="/admin/logout">
+            Выйти
+        </a>
+
+    </div>
+
+</header>
+
+
+<main class="admin-container">
+
+
+    <!-- ================================================= -->
+    <!-- ДАШБОРД -->
+    <!-- ================================================= -->
+
+    <section
+        id="dashboardSection"
+        class="admin-page-section active"
+    >
+
+        <section class="page-title dashboard-title">
+
+            <div>
+
+                <p class="eyebrow">
+                    ОБЗОР РЕСТОРАНА
+                </p>
+
+                <h1>
+                    Дашборд
+                </h1>
+
+                <p class="page-description">
+                    Ключевые показатели бронирований,
+                    предзаказов и загрузки ресторана.
+                </p>
+
+            </div>
+
+            <div
+                class="dashboard-date"
+                id="dashboardDate"
+            ></div>
+
+        </section>
+
+
+        <!-- KPI -->
+
+        <section class="dashboard-kpis">
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    Броней сегодня
+                </span>
+
+                <strong id="dashboardTodayBookings">
+                    0
+                </strong>
+
+                <small>
+                    все бронирования на сегодня
+                </small>
+
+            </article>
+
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    Гостей сегодня
+                </span>
+
+                <strong id="dashboardTodayGuests">
+                    0
+                </strong>
+
+                <small>
+                    по броням на сегодня
+                </small>
+
+            </article>
+
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    Активные брони
+                </span>
+
+                <strong id="dashboardActiveBookings">
+                    0
+                </strong>
+
+                <small>
+                    подтверждено + гости пришли
+                </small>
+
+            </article>
+
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    Отменено
+                </span>
+
+                <strong id="dashboardCancelledBookings">
+                    0
+                </strong>
+
+                <small>
+                    за всё время
+                </small>
+
+            </article>
+
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    С предзаказом
+                </span>
+
+                <strong id="dashboardPreorders">
+                    0
+                </strong>
+
+                <small>
+                    броней с блюдами
+                </small>
+
+            </article>
+
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    Сумма предзаказов
+                </span>
+
+                <strong id="dashboardPreorderAmount">
+                    0 ₸
+                </strong>
+
+                <small>
+                    по всем предзаказам
+                </small>
+
+            </article>
+
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    Оплачено депозитов
+                </span>
+
+                <strong id="dashboardPaidDeposits">
+                    0
+                </strong>
+
+                <small>
+                    статус «Оплачено»
+                </small>
+
+            </article>
+
+
+            <article class="dashboard-kpi">
+
+                <span>
+                    Доступно столов
+                </span>
+
+                <strong id="dashboardAvailableTables">
+                    0 / 16
+                </strong>
+
+                <small>
+                    для новых бронирований
+                </small>
+
+            </article>
+
+        </section>
+
+
+        <!-- ОСНОВНЫЕ ГРАФИКИ -->
+
+        <section class="dashboard-grid">
+
+
+            <article class="dashboard-panel dashboard-wide">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ДИНАМИКА
+                        </p>
+
+                        <h2>
+                            Бронирования за последние 7 дней
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dashboardBookingChart"
+                    class="dashboard-bar-chart"
+                ></div>
+
+            </article>
+
+
+            <article class="dashboard-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            СТАТУСЫ
+                        </p>
+
+                        <h2>
+                            Бронирования
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dashboardStatuses"
+                    class="dashboard-status-chart"
+                ></div>
+
+            </article>
+
+
+            <article class="dashboard-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ЗОНЫ
+                        </p>
+
+                        <h2>
+                            Зал и терраса
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dashboardZones"
+                    class="dashboard-zones"
+                ></div>
+
+            </article>
+
+
+            <article class="dashboard-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ПОПУЛЯРНОСТЬ
+                        </p>
+
+                        <h2>
+                            Топ столиков
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dashboardPopularTables"
+                    class="dashboard-ranking"
+                ></div>
+
+            </article>
+
+
+            <article class="dashboard-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ВРЕМЯ
+                        </p>
+
+                        <h2>
+                            Популярные часы
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dashboardPopularTimes"
+                    class="dashboard-ranking"
+                ></div>
+
+            </article>
+
+        </section>
+
+
+        <!-- НИЖНИЕ СПИСКИ -->
+
+        <section class="dashboard-lists">
+
+
+            <article class="dashboard-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            БЛИЖАЙШИЕ
+                        </p>
+
+                        <h2>
+                            Ближайшие бронирования
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dashboardUpcoming"
+                    class="dashboard-list"
+                ></div>
+
+            </article>
+
+
+            <article class="dashboard-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            КУХНЯ
+                        </p>
+
+                        <h2>
+                            Последние предзаказы
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dashboardRecentPreorders"
+                    class="dashboard-list"
+                ></div>
+
+            </article>
+
+        </section>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- БРОНИРОВАНИЯ -->
+    <!-- ================================================= -->
+
+    <section
+        id="bookingsSection"
+        class="admin-page-section"
+    >
+
+        <section class="page-title">
+
+            <p class="eyebrow">
+                УПРАВЛЕНИЕ РЕСТОРАНОМ
+            </p>
+
+            <h1>
+                Бронирования
+            </h1>
+
+            <p class="page-description">
+                Управление текущими и будущими
+                бронированиями ресторана.
+            </p>
+
+        </section>
+
+
+        <section class="statistics">
+
+            <article class="stat-card">
+                <span>Сегодня</span>
+                <strong id="todayCount">0</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>Подтверждено</span>
+                <strong id="confirmedCount">0</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>Гости пришли</span>
+                <strong id="arrivedCount">0</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>Завершено</span>
+                <strong id="completedCount">0</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>Отменено</span>
+                <strong id="cancelledCount">0</strong>
+            </article>
+
+        </section>
+
+
+        <section class="today-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ТЕКУЩИЙ ДЕНЬ
+                    </p>
+
+                    <h2>
+                        Бронирования на сегодня
+                    </h2>
+
+                </div>
+
+                <span
+                    class="today-date"
+                    id="todayDate"
+                ></span>
+
+            </div>
+
+            <div
+                id="todayReservations"
+                class="today-list"
+            ></div>
+
+            <div
+                id="todayEmpty"
+                class="empty-today"
+            >
+                На сегодня бронирований нет.
+            </div>
+
+        </section>
+
+
+        <section class="all-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        БАЗА БРОНИРОВАНИЙ
+                    </p>
+
+                    <h2>
+                        Все бронирования
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="toolbar">
+
+                <div class="search-field">
+
+                    <label for="searchInput">
+                        Поиск
+                    </label>
+
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Имя, телефон или номер брони"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label for="dateFilter">
+                        Дата
+                    </label>
+
+                    <input
+                        type="date"
+                        id="dateFilter"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label for="statusFilter">
+                        Статус
+                    </label>
+
+                    <select id="statusFilter">
+
+                        <option value="all">
+                            Все статусы
+                        </option>
+
+                        <option value="confirmed">
+                            Подтверждено
+                        </option>
+
+                        <option value="arrived">
+                            Гость пришёл
+                        </option>
+
+                        <option value="completed">
+                            Завершено
+                        </option>
+
+                        <option value="cancelled">
+                            Отменено
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    id="resetFilters"
+                    type="button"
+                    class="reset-button"
+                >
+                    Сбросить
+                </button>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+                        <th>ID</th>
+                        <th>Клиент</th>
+                        <th>Телефон</th>
+                        <th>Стол</th>
+                        <th>Гостей</th>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Статус</th>
+                        <th>Оплата</th>
+                        <th>Действия</th>
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="reservationsTable"></tbody>
+
+                </table>
+
+                <div
+                    id="emptyState"
+                    class="empty-state"
+                >
+                    Бронирования не найдены.
+                </div>
+
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- СТОЛИКИ -->
+    <!-- ================================================= -->
+
+    <section
+        id="tablesSection"
+        class="admin-page-section"
+    >
+
+        <section class="page-title">
+
+            <p class="eyebrow">
+                УПРАВЛЕНИЕ РЕСТОРАНОМ
+            </p>
+
+            <h1>
+                Столики
+            </h1>
+
+            <p class="page-description">
+                Временно отключайте столики,
+                недоступные для новых бронирований.
+            </p>
+
+        </section>
+
+
+        <section class="tables-summary">
+
+            <article class="stat-card">
+
+                <span>
+                    Всего столиков
+                </span>
+
+                <strong id="tablesTotal">
+                    16
+                </strong>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <span>
+                    Доступно
+                </span>
+
+                <strong id="tablesActive">
+                    0
+                </strong>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <span>
+                    Недоступно
+                </span>
+
+                <strong id="tablesDisabled">
+                    0
+                </strong>
+
+            </article>
+
+        </section>
+
+
+        <section class="tables-management">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        СХЕМА ЗАЛА
+                    </p>
+
+                    <h2>
+                        Управление доступностью
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="adminTablesGrid"
+                class="admin-tables-grid"
+            ></div>
+
+
+            <div
+                id="tablesEmpty"
+                class="empty-state"
+            >
+                Не удалось загрузить столики.
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- ОТЧЁТЫ -->
+    <!-- ================================================= -->
+
+    <section
+        id="reportsSection"
+        class="admin-page-section"
+    >
+
+        <section class="page-title reports-title">
+
+            <div>
+
+                <p class="eyebrow">
+                    АНАЛИТИКА
+                </p>
+
+                <h1>
+                    Отчёты
+                </h1>
+
+                <p class="page-description">
+                    Статистика по бронированиям
+                    и загрузке ресторана.
+                </p>
+
+            </div>
+
+
+            <div class="report-period">
+
+                <label for="reportPeriod">
+                    Период
+                </label>
+
+                <select id="reportPeriod">
+
+                    <option value="all">
+                        За всё время
+                    </option>
+
+                    <option value="7">
+                        Последние 7 дней
+                    </option>
+
+                    <option value="30">
+                        Последние 30 дней
+                    </option>
+
+                    <option value="90">
+                        Последние 90 дней
+                    </option>
+
+                </select>
+
+            </div>
+
+        </section>
+
+
+        <section class="report-kpis">
+
+            <article class="report-kpi">
+
+                <span>
+                    Всего броней
+                </span>
+
+                <strong id="reportTotal">
+                    0
+                </strong>
+
+                <small>
+                    за выбранный период
+                </small>
+
+            </article>
+
+
+            <article class="report-kpi">
+
+                <span>
+                    Всего гостей
+                </span>
+
+                <strong id="reportGuests">
+                    0
+                </strong>
+
+                <small>
+                    по всем броням
+                </small>
+
+            </article>
+
+
+            <article class="report-kpi">
+
+                <span>
+                    Завершено
+                </span>
+
+                <strong id="reportCompleted">
+                    0
+                </strong>
+
+                <small>
+                    успешных посещений
+                </small>
+
+            </article>
+
+
+            <article class="report-kpi">
+
+                <span>
+                    Процент отмен
+                </span>
+
+                <strong id="reportCancelRate">
+                    0%
+                </strong>
+
+                <small>
+                    от общего числа
+                </small>
+
+            </article>
+
+        </section>
+
+
+        <section class="report-highlights">
+
+            <article class="highlight-card">
+
+                <span>
+                    Самый востребованный стол
+                </span>
+
+                <strong id="popularTable">
+                    —
+                </strong>
+
+                <small id="popularTableText">
+                    Нет данных
+                </small>
+
+            </article>
+
+
+            <article class="highlight-card">
+
+                <span>
+                    Популярное время
+                </span>
+
+                <strong id="popularTime">
+                    —
+                </strong>
+
+                <small id="popularTimeText">
+                    Нет данных
+                </small>
+
+            </article>
+
+
+            <article class="highlight-card">
+
+                <span>
+                    Среднее число гостей
+                </span>
+
+                <strong id="averageGuests">
+                    0
+                </strong>
+
+                <small>
+                    на одну бронь
+                </small>
+
+            </article>
+
+        </section>
+
+
+        <section class="report-grid">
+
+            <article class="report-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ДИНАМИКА
+                        </p>
+
+                        <h2>
+                            Бронирования по датам
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="dateChart"
+                    class="bar-chart"
+                ></div>
+
+                <div
+                    id="dateChartEmpty"
+                    class="report-empty"
+                >
+                    Недостаточно данных для графика.
+                </div>
+
+            </article>
+
+
+            <article class="report-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            СТАТУСЫ
+                        </p>
+
+                        <h2>
+                            Структура бронирований
+                        </h2>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="statusReport"
+                    class="status-report"
+                ></div>
+
+            </article>
+
+        </section>
+
+
+        <section class="report-panel table-load-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ЗАГРУЗКА
+                    </p>
+
+                    <h2>
+                        Популярность столов
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <div
+                id="tableLoad"
+                class="table-load"
+            ></div>
+
+        </section>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- ПРЕДЗАКАЗЫ -->
+    <!-- ================================================= -->
+
+    <section
+        id="preordersSection"
+        class="admin-page-section"
+    >
+
+        <section class="page-title">
+
+            <p class="eyebrow">
+                КУХНЯ И ПРЕДЗАКАЗЫ
+            </p>
+
+            <h1>
+                Предзаказы
+            </h1>
+
+            <p class="page-description">
+                Только бронирования,
+                в которых гости заранее выбрали блюда.
+            </p>
+
+        </section>
+
+
+        <section class="preorder-summary">
+
+            <article class="stat-card">
+
+                <span>
+                    Броней с предзаказом
+                </span>
+
+                <strong id="preordersCount">
+                    0
+                </strong>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <span>
+                    Заказано блюд
+                </span>
+
+                <strong id="preordersItemsCount">
+                    0
+                </strong>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <span>
+                    Сумма предзаказов
+                </span>
+
+                <strong id="preordersAmount">
+                    0 ₸
+                </strong>
+
+            </article>
+
+        </section>
+
+
+        <section class="preorders-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        СПИСОК
+                    </p>
+
+                    <h2>
+                        Брони с предзаказом
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="preorder-toolbar">
+
+                <div>
+
+                    <label for="preorderSearch">
+                        Поиск
+                    </label>
+
+                    <input
+                        type="text"
+                        id="preorderSearch"
+                        placeholder="Имя, телефон или номер брони"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label for="preorderDateFilter">
+                        Дата
+                    </label>
+
+                    <input
+                        type="date"
+                        id="preorderDateFilter"
+                    >
+
+                </div>
+
+
+                <button
+                    id="resetPreorderFilters"
+                    type="button"
+                    class="reset-button"
+                >
+                    Сбросить
+                </button>
+
+            </div>
+
+
+            <div
+                id="preordersList"
+                class="preorders-list"
+            ></div>
+
+
+            <div
+                id="preordersEmpty"
+                class="empty-state"
+            >
+                Предзаказов пока нет.
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <section id="logsSection" class="admin-page-section">
+        <section class="page-title">
+            <p class="eyebrow">АУДИТ И ИСТОРИЯ</p>
+            <h1>Журнал действий</h1>
+            <p class="page-description">История изменений, выполненных администратором в системе.</p>
+        </section>
+
+        <section class="logs-summary">
+            <article class="stat-card"><span>Всего записей</span><strong id="logsTotal">0</strong></article>
+            <article class="stat-card"><span>Сегодня</span><strong id="logsToday">0</strong></article>
+            <article class="stat-card"><span>Администратор</span><strong id="logsAdmin">—</strong></article>
+        </section>
+
+        <section class="logs-section">
+            <div class="section-heading">
+                <div><p class="eyebrow">ИСТОРИЯ ИЗМЕНЕНИЙ</p><h2>Действия администратора</h2></div>
+                <button id="refreshLogsButton" type="button" class="secondary-button logs-refresh-button">Обновить</button>
+            </div>
+
+            <div class="logs-toolbar">
+                <div class="search-field">
+                    <label for="logsSearch">Поиск</label>
+                    <input id="logsSearch" type="text" placeholder="Бронь, стол, действие...">
+                </div>
+                <div>
+                    <label for="logsActionFilter">Тип действия</label>
+                    <select id="logsActionFilter">
+                        <option value="all">Все действия</option>
+                        <option value="reservation_edited">Редактирование брони</option>
+                        <option value="reservation_status_changed">Статус брони</option>
+                        <option value="reservation_cancelled">Отмена брони</option>
+                        <option value="preorder_status_changed">Статус предзаказа</option>
+                        <option value="table_status_changed">Статус столика</option>
+                    </select>
+                </div>
+                <button id="resetLogsFilters" type="button" class="reset-button">Сбросить</button>
+            </div>
+
+            <div class="table-container">
+                <table class="logs-table">
+                    <thead><tr><th>Дата и время</th><th>Администратор</th><th>Действие</th><th>Объект</th><th>Изменение</th></tr></thead>
+                    <tbody id="logsTable"></tbody>
+                </table>
+                <div id="logsEmpty" class="empty-state">Записей журнала пока нет.</div>
+            </div>
+        </section>
+    </section>
+
+</main>
+
+
+<!-- ===================================================== -->
+<!-- МОДАЛЬНОЕ ОКНО ПРЕДЗАКАЗА -->
+<!-- ===================================================== -->
+
+<div
+    id="preorderDetailsModal"
+    class="modal"
+>
+
+    <div class="modal-card preorder-modal-card">
+
+        <button
+            id="closePreorderDetailsModal"
+            type="button"
+            class="modal-close"
+        >
+            ×
+        </button>
+
+
+        <p class="eyebrow">
+            ПРЕДЗАКАЗ
+        </p>
+
+        <h2>
+            Бронь №
+            <span id="preorderDetailsId"></span>
+        </h2>
+
+
+        <div class="details-grid">
+
+            <div>
+                <span>Клиент</span>
+                <strong id="preorderDetailsName"></strong>
+            </div>
+
+            <div>
+                <span>Телефон</span>
+                <strong id="preorderDetailsPhone"></strong>
+            </div>
+
+            <div>
+                <span>Стол</span>
+                <strong id="preorderDetailsTable"></strong>
+            </div>
+
+            <div>
+                <span>Гостей</span>
+                <strong id="preorderDetailsGuests"></strong>
+            </div>
+
+            <div>
+                <span>Дата</span>
+                <strong id="preorderDetailsDate"></strong>
+            </div>
+
+            <div>
+                <span>Время</span>
+                <strong id="preorderDetailsTime"></strong>
+            </div>
+
+            <div>
+                <span>Статус</span>
+                <strong id="preorderDetailsStatus"></strong>
+            </div>
+
+            <div>
+                <span>Сумма</span>
+                <strong id="preorderDetailsTotal"></strong>
+            </div>
+
+        </div>
+
+
+        <div class="preorder-kitchen-status">
+            <div>
+                <p class="eyebrow">СТАТУС ПРЕДЗАКАЗА</p>
+                <span id="preorderKitchenStatusBadge" class="preorder-status preorder-status-new">Новый</span>
+            </div>
+
+            <div class="preorder-kitchen-controls">
+                <select id="preorderKitchenStatusSelect">
+                    <option value="new">Новый</option>
+                    <option value="preparing">Готовится</option>
+                    <option value="ready">Готов</option>
+                </select>
+                <button id="savePreorderKitchenStatus" type="button" class="primary-button">Сохранить статус</button>
+            </div>
+            <p id="preorderKitchenStatusError" class="form-error"></p>
+        </div>
+
+
+        <div class="preorder-modal-section">
+
+            <p class="eyebrow">
+                БЛЮДА
+            </p>
+
+            <div
+                id="preorderDetailsItems"
+                class="preorder-details-items"
+            ></div>
+
+        </div>
+
+
+        <div class="preorder-modal-section">
+
+            <p class="eyebrow">
+                ПОЖЕЛАНИЯ
+            </p>
+
+            <p
+                id="preorderDetailsRequests"
+                class="preorder-note"
+            >
+                —
+            </p>
+
+        </div>
+
+
+        <div class="preorder-modal-section">
+
+            <p class="eyebrow">
+                КОММЕНТАРИЙ
+            </p>
+
+            <p
+                id="preorderDetailsComment"
+                class="preorder-note"
+            >
+                —
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- ДЕТАЛИ БРОНИ -->
+<!-- ===================================================== -->
+
+<div
+    id="detailsModal"
+    class="modal"
+>
+
+    <div class="modal-card">
+
+        <button
+            id="closeDetailsModal"
+            type="button"
+            class="modal-close"
+        >
+            ×
+        </button>
+
+
+        <p class="eyebrow">
+            БРОНИРОВАНИЕ
+        </p>
+
+        <h2>
+            Бронь №
+            <span id="detailsId"></span>
+        </h2>
+
+
+        <div class="details-grid">
+
+            <div>
+                <span>Клиент</span>
+                <strong id="detailsName"></strong>
+            </div>
+
+            <div>
+                <span>Телефон</span>
+                <strong id="detailsPhone"></strong>
+            </div>
+
+            <div>
+                <span>Стол</span>
+                <strong id="detailsTable"></strong>
+            </div>
+
+            <div>
+                <span>Гостей</span>
+                <strong id="detailsGuests"></strong>
+            </div>
+
+            <div>
+                <span>Дата</span>
+                <strong id="detailsDate"></strong>
+            </div>
+
+            <div>
+                <span>Время</span>
+                <strong id="detailsTime"></strong>
+            </div>
+
+            <div>
+                <span>Оплата</span>
+                <strong id="detailsPayment"></strong>
+            </div>
+
+            <div>
+                <span>Оплачено</span>
+                <strong id="detailsPaidAt">
+                    —
+                </strong>
+            </div>
+
+            <div>
+                <span>
+                    Особые пожелания
+                </span>
+
+                <strong id="detailsSpecialRequests">
+                    —
+                </strong>
+            </div>
+
+            <div>
+                <span>
+                    Комментарий
+                </span>
+
+                <strong id="detailsComment">
+                    —
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="details-status">
+
+            <label for="detailsStatus">
+                Статус бронирования
+            </label>
+
+            <select id="detailsStatus">
+
+                <option value="confirmed">
+                    Подтверждено
+                </option>
+
+                <option value="arrived">
+                    Гость пришёл
+                </option>
+
+                <option value="completed">
+                    Завершено
+                </option>
+
+                <option value="cancelled">
+                    Отменено
+                </option>
+
+            </select>
+
+
+            <button
+                id="saveStatusButton"
+                type="button"
+                class="primary-button"
+            >
+                Изменить статус
+            </button>
+
+        </div>
+
+
+        <p
+            id="statusError"
+            class="form-error"
+        ></p>
+
+
+        <button
+            id="openEditButton"
+            type="button"
+            class="secondary-button"
+        >
+            Редактировать бронирование
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- РЕДАКТИРОВАНИЕ БРОНИ -->
+<!-- ===================================================== -->
+
+<div
+    id="editModal"
+    class="modal"
+>
+
+    <div class="modal-card">
+
+        <button
+            id="closeEditModal"
+            type="button"
+            class="modal-close"
+        >
+            ×
+        </button>
+
+
+        <p class="eyebrow">
+            РЕДАКТИРОВАНИЕ
+        </p>
+
+        <h2>
+            Бронь №
+            <span id="editReservationNumber"></span>
+        </h2>
+
+
+        <form id="editForm">
+
+            <input
+                type="hidden"
+                id="editReservationId"
+            >
+
+
+            <div class="form-group">
+
+                <label for="editName">
+                    Имя клиента
+                </label>
+
+                <input
+                    type="text"
+                    id="editName"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="editPhone">
+                    Телефон
+                </label>
+
+                <input
+                    type="tel"
+                    id="editPhone"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="editTable">
+                        Стол
+                    </label>
+
+                    <select id="editTable">
+
+                        <option value="1">Стол №1 — 2 места</option>
+                        <option value="2">Стол №2 — 4 места</option>
+                        <option value="3">Стол №3 — 4 места</option>
+                        <option value="4">Стол №4 — 6 мест</option>
+                        <option value="5">Стол №5 — 4 места</option>
+                        <option value="6">Стол №6 — 4 места</option>
+                        <option value="7">Стол №7 — 6 мест</option>
+                        <option value="8">Стол №8 — 2 места</option>
+                        <option value="9">Стол №9 — 4 места</option>
+                        <option value="10">Стол №10 — 4 места</option>
+
+                        <option value="11">Стол №11 — 2 места</option>
+                        <option value="12">Стол №12 — 4 места</option>
+                        <option value="13">Стол №13 — 4 места</option>
+                        <option value="14">Стол №14 — 4 места</option>
+                        <option value="15">Стол №15 — 2 места</option>
+                        <option value="16">Стол №16 — 6 мест</option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editGuests">
+                        Гостей
+                    </label>
+
+                    <select id="editGuests">
+
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="editDate">
+                        Дата
+                    </label>
+
+                    <input
+                        type="date"
+                        id="editDate"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editTime">
+                        Время
+                    </label>
+
+                    <select
+                        id="editTime"
+                        required
+                    >
+                        <option>12:00</option>
+                        <option>12:30</option>
+                        <option>13:00</option>
+                        <option>13:30</option>
+                        <option>14:00</option>
+                        <option>14:30</option>
+                        <option>15:00</option>
+                        <option>15:30</option>
+                        <option>16:00</option>
+                        <option>16:30</option>
+                        <option>17:00</option>
+                        <option>17:30</option>
+                        <option>18:00</option>
+                        <option>18:30</option>
+                        <option>19:00</option>
+                        <option>19:30</option>
+                        <option>20:00</option>
+                        <option>20:30</option>
+                        <option>21:00</option>
+                        <option>21:30</option>
+                        <option>22:00</option>
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <p
+                id="editError"
+                class="form-error"
+            ></p>
+
+
+            <button
+                type="submit"
+                class="primary-button full-button"
+            >
+                Сохранить изменения
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/admin.js') }}"
+></script>
+
+</body>
+</html>

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>TABLE — Личный кабинет</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/account.css') }}"
+    >
+</head>
+
+<body>
+
+<header class="account-header">
+
+    <a
+        href="{{ url_for('home') }}"
+        class="logo"
+    >
+        TABLE
+    </a>
+
+    <nav class="header-actions">
+
+        <a href="{{ url_for('home') }}">
+            На сайт
+        </a>
+
+        <a href="{{ url_for('user_logout') }}">
+            Выйти
+        </a>
+
+    </nav>
+
+</header>
+
+
+<main class="account-container">
+
+    <!-- =========================================
+         ЗАГОЛОВОК
+         ========================================= -->
+
+    <section class="account-title">
+
+        <p class="eyebrow">
+            ЛИЧНЫЙ КАБИНЕТ
+        </p>
+
+        <h1>
+            Здравствуйте, {{ user['name'] }}
+        </h1>
+
+        <p class="account-description">
+            Здесь находятся ваши бронирования и информация об оплате.
+        </p>
+
+    </section>
+
+
+    <!-- =========================================
+         ПРОФИЛЬ
+         ========================================= -->
+
+    <section class="profile-card">
+
+        <div class="profile-item">
+
+            <span>
+                Имя
+            </span>
+
+            <strong>
+                {{ user['name'] }}
+            </strong>
+
+        </div>
+
+
+        <div class="profile-item">
+
+            <span>
+                Телефон
+            </span>
+
+            <strong>
+                {{ user['phone'] }}
+            </strong>
+
+        </div>
+
+
+        <div class="profile-item">
+
+            <span>
+                Email
+            </span>
+
+            <strong>
+                {{ user['email'] }}
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================
+         БРОНИРОВАНИЯ
+         ========================================= -->
+
+    <section class="reservations-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <p class="eyebrow">
+                    МОИ БРОНИ
+                </p>
+
+                <h2>
+                    Бронирования
+                </h2>
+
+            </div>
+
+
+            <a
+                href="{{ url_for('home') }}"
+                class="new-booking-button"
+            >
+                + Новая бронь
+            </a>
+
+        </div>
+
+
+        {% if reservations %}
+
+            <div class="reservations-list">
+
+                {% for r in reservations %}
+
+                    <article class="reservation-card">
+
+
+                        <!-- ВЕРХ КАРТОЧКИ -->
+
+                        <div class="reservation-top">
+
+                            <div>
+
+                                <span class="reservation-number">
+                                    БРОНЬ №{{ r['id'] }}
+                                </span>
+
+                                <h3>
+                                    Стол №{{ r['table_number'] }}
+                                </h3>
+
+                            </div>
+
+
+                            <span
+                                class="status status-{{ r['status'] }}"
+                            >
+
+                                {% if r['status'] == 'confirmed' %}
+
+                                    Подтверждено
+
+                                {% elif r['status'] == 'arrived' %}
+
+                                    Гость пришёл
+
+                                {% elif r['status'] == 'completed' %}
+
+                                    Завершено
+
+                                {% elif r['status'] == 'cancelled' %}
+
+                                    Отменено
+
+                                {% else %}
+
+                                    {{ r['status'] }}
+
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+
+                        <!-- ДАННЫЕ БРОНИ -->
+
+                        <div class="reservation-details">
+
+                            <div class="detail-item">
+
+                                <span>
+                                    Дата
+                                </span>
+
+                                <strong>
+                                    {{ r['reservation_date'] }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span>
+                                    Время
+                                </span>
+
+                                <strong>
+                                    {{ r['reservation_time'] }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span>
+                                    Гостей
+                                </span>
+
+                                <strong>
+                                    {{ r['guests'] }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span>
+                                    Телефон
+                                </span>
+
+                                <strong>
+                                    {{ r['phone'] }}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- ОСОБЫЕ ПОЖЕЛАНИЯ -->
+
+                        {% if r['special_requests'] or r['comment'] %}
+                            <div class="payment-box">
+                                <div class="payment-main">
+                                    <div>
+                                        <span class="payment-label">
+                                            ОСОБЫЕ ПОЖЕЛАНИЯ
+                                        </span>
+
+                                        <strong>
+                                            {% if r['special_requests'] %}
+                                                {% set requests = r['special_requests'].split(',') %}
+
+                                                {% for request in requests %}
+                                                    {% set request = request.strip() %}
+
+                                                    {% if request == 'window' %}
+                                                        🪟 Столик у окна{% if not loop.last %}, {% endif %}
+                                                    {% elif request == 'child_chair' %}
+                                                        👶 Детский стул{% if not loop.last %}, {% endif %}
+                                                    {% elif request == 'birthday' %}
+                                                        🎂 День рождения{% if not loop.last %}, {% endif %}
+                                                    {% elif request == 'quiet' %}
+                                                        🔇 Тихое место{% if not loop.last %}, {% endif %}
+                                                    {% elif request == 'accessible' %}
+                                                        ♿ Доступный стол{% if not loop.last %}, {% endif %}
+                                                    {% else %}
+                                                        {{ request }}{% if not loop.last %}, {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                Нет
+                                            {% endif %}
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                {% if r['comment'] %}
+                                    <div class="payment-extra">
+                                        <span>
+                                            Комментарий: {{ r['comment'] }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- ОПЛАТА -->
+
+                        <div
+                            class="
+                                payment-box
+                                {% if r['payment_status'] == 'paid' %}
+                                    payment-box-paid
+                                {% elif r['payment_status'] == 'refunded' %}
+                                    payment-box-refunded
+                                {% endif %}
+                            "
+                        >
+
+                            <div class="payment-main">
+
+                                <div>
+
+                                    <span class="payment-label">
+                                        ОПЛАТА
+                                    </span>
+
+
+                                    {% if r['payment_status'] == 'paid' %}
+
+                                        <strong class="payment-status paid">
+                                            Оплачено
+                                        </strong>
+
+                                    {% elif r['payment_status'] == 'refunded' %}
+
+                                        <strong class="payment-status refunded">
+                                            Возврат
+                                        </strong>
+
+                                    {% else %}
+
+                                        <strong class="payment-status unpaid">
+                                            Не оплачено
+                                        </strong>
+
+                                    {% endif %}
+
+                                </div>
+
+
+                                <div class="payment-price">
+
+                                    <span>
+                                        Сумма
+                                    </span>
+
+                                    <strong>
+                                        5 000 ₸
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            {% if r['payment_status'] == 'paid' %}
+
+                                <div class="payment-extra">
+
+                                    <span>
+                                        Демо-платёж подтверждён
+                                    </span>
+
+                                    {% if r['payment_method'] %}
+
+                                        <span>
+                                            Способ:
+                                            {% if r['payment_method'] == 'card' %}
+                                                Банковская карта
+                                            {% elif r['payment_method'] == 'kaspi' %}
+                                                Kaspi QR
+                                            {% elif r['payment_method'] == 'apple_pay' %}
+                                                Apple Pay
+                                            {% else %}
+                                                {{ r['payment_method'] }}
+                                            {% endif %}
+                                        </span>
+
+                                    {% endif %}
+
+
+                                    {% if r['paid_at'] %}
+
+                                        <span>
+                                            {{ r['paid_at'] }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% elif r['payment_status'] == 'refunded' %}
+
+                                <div class="payment-extra">
+
+                                    <span>
+                                        Бронирование отменено.
+                                        Платёж отмечен как возвращённый.
+                                    </span>
+
+                                </div>
+
+                            {% else %}
+
+                                <p class="payment-description">
+                                    Вы можете оплатить бронирование
+                                    в демонстрационном режиме.
+                                </p>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- КНОПКИ -->
+
+                        <div class="reservation-actions">
+
+
+                            {% if
+                                r['status'] == 'confirmed'
+                                and
+                                r['payment_status'] != 'paid'
+                            %}
+
+                                <a
+                                    class="pay-button"
+                                    href="{{ url_for('payment', rid=r['id']) }}"
+                                >
+                                    Оплатить бронь — 5 000 ₸
+                                </a>
+
+                            {% endif %}
+
+
+                            {% if r['status'] == 'confirmed' %}
+
+                                <form
+    action="{{ url_for('account_cancel_reservation', rid=r['id']) }}"
+    method="POST"
+    class="cancel-form"
+>
+
+    <button
+        class="cancel-button"
+        type="submit"
+    >
+        Отменить бронирование
+    </button>
+
+</form>
+
+                            {% endif %}
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ○
+                </div>
+
+                <h3>
+                    У вас пока нет бронирований
+                </h3>
+
+                <p>
+                    Выберите дату, время и столик
+                    на главной странице.
+                </p>
+
+                <a
+                    href="{{ url_for('home') }}"
+                    class="new-booking-button"
+                >
+                    Забронировать столик
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

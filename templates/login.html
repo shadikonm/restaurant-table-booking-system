@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>TABLE — Вход администратора</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/login.css') }}"
+    >
+</head>
+
+<body>
+
+    <main class="login-page">
+
+        <section class="login-card">
+
+            <div class="login-brand">
+                TABLE
+            </div>
+
+            <p class="login-label">
+                ADMIN PANEL
+            </p>
+
+            <h1>
+                Вход администратора
+            </h1>
+
+            <p class="login-description">
+                Войдите, чтобы управлять бронированиями,
+                столиками и отчётами ресторана.
+            </p>
+
+
+            {% if error %}
+
+                <div class="login-error">
+                    {{ error }}
+                </div>
+
+            {% endif %}
+
+
+            <form
+                method="POST"
+                action="{{ url_for('admin_login') }}"
+                class="login-form"
+            >
+
+                <div class="form-group">
+
+                    <label for="username">
+                        Логин
+                    </label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Введите логин"
+                        autocomplete="username"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="password">
+                        Пароль
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Введите пароль"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+                    Войти
+                </button>
+
+            </form>
+
+
+            <a
+                href="{{ url_for('home') }}"
+                class="back-link"
+            >
+                ← Вернуться на сайт
+            </a>
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>

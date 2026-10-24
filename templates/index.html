@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TABLE — Бронирование столиков</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+<header>
+    <a class="logo" href="/">TABLE</a>
+
+    <nav>
+        <a href="/">Главная</a>
+        <a href="#booking">Бронирование</a>
+        <a href="#hall">Схема ресторана</a>
+
+        <button
+            id="openMyReservation"
+            class="my-booking-nav"
+            type="button"
+        >
+            Моя бронь
+        </button>
+
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('account') }}">Личный кабинет</a>
+        {% else %}
+            <a href="{{ url_for('user_login') }}">Войти</a>
+            <a href="{{ url_for('register') }}">Регистрация</a>
+        {% endif %}
+    </nav>
+</header>
+
+
+<section class="hero">
+
+    <p class="eyebrow">
+        ОНЛАЙН-БРОНИРОВАНИЕ
+    </p>
+
+    <h1>
+        Ваш стол уже ждёт
+    </h1>
+
+    <p>
+        Выберите дату, время и количество гостей.
+        Затем выберите стол в основном зале или на террасе.
+    </p>
+
+    <a
+        class="hero-btn"
+        href="#booking"
+    >
+        Выбрать стол
+    </a>
+
+</section>
+
+
+<main>
+
+    <!-- ========================================
+         ПАРАМЕТРЫ БРОНИРОВАНИЯ
+    ========================================= -->
+
+    <section
+        class="booking"
+        id="booking"
+    >
+
+        <div>
+            <label for="date">
+                Дата
+            </label>
+
+            <input
+                id="date"
+                type="date"
+            >
+        </div>
+
+
+        <div>
+            <label for="time">
+                Время
+            </label>
+
+            <select id="time">
+
+                <option value="">
+                    Выберите время
+                </option>
+
+                <option value="12:00">12:00</option>
+                <option value="12:30">12:30</option>
+
+                <option value="13:00">13:00</option>
+                <option value="13:30">13:30</option>
+
+                <option value="14:00">14:00</option>
+                <option value="14:30">14:30</option>
+
+                <option value="15:00">15:00</option>
+                <option value="15:30">15:30</option>
+
+                <option value="16:00">16:00</option>
+                <option value="16:30">16:30</option>
+
+                <option value="17:00">17:00</option>
+                <option value="17:30">17:30</option>
+
+                <option value="18:00">18:00</option>
+                <option value="18:30">18:30</option>
+
+                <option value="19:00">19:00</option>
+                <option value="19:30">19:30</option>
+
+                <option value="20:00">20:00</option>
+                <option value="20:30">20:30</option>
+
+                <option value="21:00">21:00</option>
+                <option value="21:30">21:30</option>
+
+                <option value="22:00">22:00</option>
+
+            </select>
+        </div>
+
+
+        <div>
+            <label for="guests">
+                Гостей
+            </label>
+
+            <select id="guests">
+
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+
+                <option
+                    value="4"
+                    selected
+                >
+                    4
+                </option>
+
+                <option value="5">5</option>
+                <option value="6">6</option>
+
+            </select>
+        </div>
+
+
+        <button
+            id="showTablesButton"
+            type="button"
+        >
+            Показать столы
+        </button>
+
+    </section>
+
+
+    <p
+        id="pageMessage"
+        class="message"
+    ></p>
+
+
+    <!-- ========================================
+         СХЕМА РЕСТОРАНА
+    ========================================= -->
+
+    <section
+        id="hall"
+        class="hall-section"
+    >
+
+        <div class="hall-head">
+
+            <div>
+                <p class="eyebrow">
+                    СХЕМА РЕСТОРАНА
+                </p>
+
+                <h2>
+                    Выберите столик
+                </h2>
+
+                <p class="hall-description">
+                    Переключайтесь между основным залом и террасой.
+                </p>
+            </div>
+
+
+            <div class="legend">
+
+                <span>
+                    <i class="legend-dot free-dot"></i>
+                    Свободен
+                </span>
+
+                <span>
+                    <i class="legend-dot busy-dot"></i>
+                    Занят
+                </span>
+
+                <span>
+                    <i class="legend-dot unsuitable-dot"></i>
+                    Не подходит
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- ВКЛАДКИ -->
+
+        <div class="zone-tabs">
+
+            <button
+                id="hallTab"
+                class="zone-tab active"
+                type="button"
+            >
+                Зал
+                <span>10 столов</span>
+            </button>
+
+
+            <button
+                id="terraceTab"
+                class="zone-tab"
+                type="button"
+            >
+                Терраса
+                <span>6 столов</span>
+            </button>
+
+        </div>
+
+
+        <!-- ========================================
+             ОСНОВНОЙ ЗАЛ
+        ========================================= -->
+
+        <div
+            id="hallMap"
+            class="restaurant-map hall-map active-map"
+        >
+
+            <div class="map-title">
+                ОСНОВНОЙ ЗАЛ
+            </div>
+
+
+            <div class="hall-windows">
+                ОКНА
+            </div>
+
+
+            <div class="kids-zone">
+
+                <strong>
+                    ДЕТСКАЯ ЗОНА
+                </strong>
+
+                <span>
+                    игровая зона
+                </span>
+
+            </div>
+
+
+            <div class="bar">
+                БАР
+            </div>
+
+
+            <div class="entrance">
+                ВХОД
+            </div>
+
+
+            <!-- 1 -->
+
+            <button
+                type="button"
+                class="table hall-table table-1 unavailable"
+                data-table="1"
+                data-capacity="2"
+                data-zone="Основной зал"
+                data-features="🪟 У окна"
+                disabled
+            >
+                <b>01</b>
+                <small>2 места</small>
+
+                <span class="table-features">
+                    🪟
+                </span>
+            </button>
+
+
+            <!-- 2 -->
+
+            <button
+                type="button"
+                class="table hall-table table-2 unavailable"
+                data-table="2"
+                data-capacity="4"
+                data-zone="Основной зал"
+                data-features="🪟 У окна"
+                disabled
+            >
+                <b>02</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    🪟
+                </span>
+            </button>
+
+
+            <!-- 3 -->
+
+            <button
+                type="button"
+                class="table hall-table table-3 unavailable"
+                data-table="3"
+                data-capacity="4"
+                data-zone="Основной зал"
+                data-features="🪟 У окна"
+                disabled
+            >
+                <b>03</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    🪟
+                </span>
+            </button>
+
+
+            <!-- 4 -->
+
+            <button
+                type="button"
+                class="table hall-table table-4 unavailable"
+                data-table="4"
+                data-capacity="6"
+                data-zone="Основной зал"
+                data-features="🪟 У окна · 🔇 Тихая зона"
+                disabled
+            >
+                <b>04</b>
+                <small>6 мест</small>
+
+                <span class="table-features">
+                    🪟 🔇
+                </span>
+            </button>
+
+
+            <!-- 5 -->
+
+            <button
+                type="button"
+                class="table hall-table table-5 unavailable"
+                data-table="5"
+                data-capacity="4"
+                data-zone="Основной зал"
+                data-features="👶 Рядом с детской зоной"
+                disabled
+            >
+                <b>05</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    👶
+                </span>
+            </button>
+
+
+            <!-- 6 -->
+
+            <button
+                type="button"
+                class="table hall-table table-6 unavailable"
+                data-table="6"
+                data-capacity="4"
+                data-zone="Основной зал"
+                data-features="👶 Рядом с детской зоной"
+                disabled
+            >
+                <b>06</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    👶
+                </span>
+            </button>
+
+
+            <!-- 7 -->
+
+            <button
+                type="button"
+                class="table hall-table table-7 unavailable"
+                data-table="7"
+                data-capacity="6"
+                data-zone="Основной зал"
+                data-features="♿ Доступный стол · 🔇 Тихая зона"
+                disabled
+            >
+                <b>07</b>
+                <small>6 мест</small>
+
+                <span class="table-features">
+                    ♿ 🔇
+                </span>
+            </button>
+
+
+            <!-- 8 -->
+
+            <button
+                type="button"
+                class="table hall-table table-8 unavailable"
+                data-table="8"
+                data-capacity="2"
+                data-zone="Основной зал"
+                data-features="👶 Рядом с детской зоной"
+                disabled
+            >
+                <b>08</b>
+                <small>2 места</small>
+
+                <span class="table-features">
+                    👶
+                </span>
+            </button>
+
+
+            <!-- 9 -->
+
+            <button
+                type="button"
+                class="table hall-table table-9 unavailable"
+                data-table="9"
+                data-capacity="4"
+                data-zone="Основной зал"
+                data-features="Стандартный стол"
+                disabled
+            >
+                <b>09</b>
+                <small>4 места</small>
+            </button>
+
+
+            <!-- 10 -->
+
+            <button
+                type="button"
+                class="table hall-table table-10 unavailable"
+                data-table="10"
+                data-capacity="4"
+                data-zone="Основной зал"
+                data-features="🔇 Тихая зона"
+                disabled
+            >
+                <b>10</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    🔇
+                </span>
+            </button>
+
+        </div>
+
+
+        <!-- ========================================
+             ТЕРРАСА
+        ========================================= -->
+
+        <div
+            id="terraceMap"
+            class="restaurant-map terrace-map"
+        >
+
+            <div class="map-title">
+                ТЕРРАСА
+            </div>
+
+
+            <div class="terrace-greenery greenery-left">
+                🌿
+            </div>
+
+            <div class="terrace-greenery greenery-right">
+                🌿
+            </div>
+
+
+            <div class="terrace-label">
+                ОТКРЫТАЯ ТЕРРАСА
+            </div>
+
+
+            <!-- 11 -->
+
+            <button
+                type="button"
+                class="table terrace-table terrace-11 unavailable"
+                data-table="11"
+                data-capacity="2"
+                data-zone="Терраса"
+                data-features="🌿 Терраса · 🔇 Тихое место"
+                disabled
+            >
+                <b>11</b>
+                <small>2 места</small>
+
+                <span class="table-features">
+                    🌿 🔇
+                </span>
+            </button>
+
+
+            <!-- 12 -->
+
+            <button
+                type="button"
+                class="table terrace-table terrace-12 unavailable"
+                data-table="12"
+                data-capacity="4"
+                data-zone="Терраса"
+                data-features="🌿 Терраса"
+                disabled
+            >
+                <b>12</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    🌿
+                </span>
+            </button>
+
+
+            <!-- 13 -->
+
+            <button
+                type="button"
+                class="table terrace-table terrace-13 unavailable"
+                data-table="13"
+                data-capacity="4"
+                data-zone="Терраса"
+                data-features="🌿 Терраса · 🔇 Тихое место"
+                disabled
+            >
+                <b>13</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    🌿 🔇
+                </span>
+            </button>
+
+
+            <!-- 14 -->
+
+            <button
+                type="button"
+                class="table terrace-table terrace-14 unavailable"
+                data-table="14"
+                data-capacity="4"
+                data-zone="Терраса"
+                data-features="🌿 Терраса · ♿ Доступный стол"
+                disabled
+            >
+                <b>14</b>
+                <small>4 места</small>
+
+                <span class="table-features">
+                    🌿 ♿
+                </span>
+            </button>
+
+
+            <!-- 15 -->
+
+            <button
+                type="button"
+                class="table terrace-table terrace-15 unavailable"
+                data-table="15"
+                data-capacity="2"
+                data-zone="Терраса"
+                data-features="🌿 Терраса · 🔇 Тихое место"
+                disabled
+            >
+                <b>15</b>
+                <small>2 места</small>
+
+                <span class="table-features">
+                    🌿 🔇
+                </span>
+            </button>
+
+
+            <!-- 16 -->
+
+            <button
+                type="button"
+                class="table terrace-table terrace-16 unavailable"
+                data-table="16"
+                data-capacity="6"
+                data-zone="Терраса"
+                data-features="🌿 Терраса · ♿ Доступный стол"
+                disabled
+            >
+                <b>16</b>
+                <small>6 мест</small>
+
+                <span class="table-features">
+                    🌿 ♿
+                </span>
+            </button>
+
+        </div>
+
+
+        <!-- ХАРАКТЕРИСТИКИ -->
+
+        <div class="feature-legend">
+
+            <span>
+                🪟 У окна
+            </span>
+
+            <span>
+                🔇 Тихая зона
+            </span>
+
+            <span>
+                👶 Рядом с детской зоной
+            </span>
+
+            <span>
+                ♿ Доступный стол
+            </span>
+
+            <span>
+                🌿 Терраса
+            </span>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- ========================================
+     МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ
+======================================== -->
+
+<div
+    class="modal"
+    id="bookingModal"
+>
+
+    <div class="card booking-card">
+
+        <button
+            id="closeModal"
+            class="close"
+            type="button"
+        >
+            ×
+        </button>
+
+
+        <p class="eyebrow">
+            БРОНИРОВАНИЕ
+        </p>
+
+
+        <h2>
+            Стол №<span id="selectedTable"></span>
+        </h2>
+
+
+        <div class="selected-table-info">
+
+            <div>
+                <span>Зона</span>
+
+                <strong id="selectedTableZone">
+                    —
+                </strong>
+            </div>
+
+            <div>
+                <span>Особенности</span>
+
+                <strong id="selectedTableFeatures">
+                    —
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="summary">
+
+            <div>
+                Дата
+
+                <strong id="summaryDate">
+                    —
+                </strong>
+            </div>
+
+
+            <div>
+                Время
+
+                <strong id="summaryTime">
+                    —
+                </strong>
+            </div>
+
+
+            <div>
+                Гостей
+
+                <strong id="summaryGuests">
+                    —
+                </strong>
+            </div>
+
+        </div>
+
+
+        <form id="bookingForm">
+
+            <input
+                id="tableNumber"
+                type="hidden"
+            >
+
+
+            <label>
+                Имя
+
+                <input
+                    id="customerName"
+                    type="text"
+                    minlength="2"
+                    maxlength="50"
+                    placeholder="Введите имя"
+                    required
+                >
+            </label>
+
+
+            <label>
+                Телефон
+
+                <input
+                    id="phone"
+                    type="tel"
+                    placeholder="+7 777 123 45 67"
+                    required
+                >
+            </label>
+
+
+
+            <!-- ПРЕДЗАКАЗ БЛЮД -->
+
+            <div class="preorder-section">
+
+                <div class="preorder-heading">
+                    <div>
+                        <p class="form-section-title">
+                            Предзаказ блюд
+                        </p>
+                        <p class="preorder-description">
+                            Можно выбрать блюда заранее. Оплата брони 5 000 ₸ остаётся отдельной.
+                        </p>
+                    </div>
+
+                    <strong id="preorderTotal" class="preorder-total">
+                        0 ₸
+                    </strong>
+                </div>
+
+                <div id="menuLoading" class="menu-loading">
+                    Загружаем меню...
+                </div>
+
+                <div id="menuCategories" class="menu-categories"></div>
+
+                <div id="menuItems" class="menu-items"></div>
+
+            </div>
+
+
+            <!-- ОСОБЫЕ ПОЖЕЛАНИЯ -->
+
+            <div class="special-requests">
+
+                <p class="form-section-title">
+                    Особые пожелания
+                </p>
+
+
+                <div class="special-grid">
+
+                    <label class="special-option">
+
+                        <input
+                            type="checkbox"
+                            name="specialRequest"
+                            value="window"
+                        >
+
+                        <span>
+                            🪟 Столик у окна
+                        </span>
+
+                    </label>
+
+
+                    <label class="special-option">
+
+                        <input
+                            type="checkbox"
+                            name="specialRequest"
+                            value="child_chair"
+                        >
+
+                        <span>
+                            👶 Детский стул
+                        </span>
+
+                    </label>
+
+
+                    <label class="special-option">
+
+                        <input
+                            type="checkbox"
+                            name="specialRequest"
+                            value="birthday"
+                        >
+
+                        <span>
+                            🎂 День рождения
+                        </span>
+
+                    </label>
+
+
+                    <label class="special-option">
+
+                        <input
+                            type="checkbox"
+                            name="specialRequest"
+                            value="quiet"
+                        >
+
+                        <span>
+                            🔇 Тихое место
+                        </span>
+
+                    </label>
+
+
+                    <label class="special-option">
+
+                        <input
+                            type="checkbox"
+                            name="specialRequest"
+                            value="accessible"
+                        >
+
+                        <span>
+                            ♿ Доступный стол
+                        </span>
+
+                    </label>
+
+                </div>
+
+            </div>
+
+
+            <label class="comment-label">
+
+                Комментарий к бронированию
+
+                <textarea
+                    id="reservationComment"
+                    maxlength="500"
+                    placeholder="Например: будем с коляской, нужна свеча для торта..."
+                ></textarea>
+
+            </label>
+
+
+            <p
+                id="bookingError"
+                class="error"
+            ></p>
+
+
+            <button
+                id="confirmBookingButton"
+                class="full"
+                type="submit"
+            >
+                Подтвердить бронирование
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================
+     УСПЕШНАЯ БРОНЬ
+======================================== -->
+
+<div
+    class="modal"
+    id="successModal"
+>
+
+    <div class="card success">
+
+        <div class="check">
+            ✓
+        </div>
+
+
+        <p class="eyebrow">
+            БРОНИРОВАНИЕ СОЗДАНО
+        </p>
+
+
+        <h2>
+            Стол забронирован
+        </h2>
+
+
+        <div class="summary two">
+
+            <div>
+                Номер брони
+
+                <strong id="successId">
+                    —
+                </strong>
+            </div>
+
+
+            <div>
+                Стол
+
+                <strong id="successTable">
+                    —
+                </strong>
+            </div>
+
+
+            <div>
+                Дата
+
+                <strong id="successDate">
+                    —
+                </strong>
+            </div>
+
+
+            <div>
+                Время
+
+                <strong id="successTime">
+                    —
+                </strong>
+            </div>
+
+        </div>
+
+
+
+        <div id="successPreorderBlock" class="success-preorder-block" hidden>
+            <span>Предзаказ блюд</span>
+            <strong id="successPreorderTotal">0 ₸</strong>
+        </div>
+
+        <p class="booking-id-hint">
+            Сохраните номер брони. Он понадобится,
+            чтобы посмотреть или отменить бронирование.
+        </p>
+
+
+        <button
+            id="successClose"
+            class="full"
+            type="button"
+        >
+            Готово
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================
+     ПОИСК МОЕЙ БРОНИ
+======================================== -->
+
+<div
+    class="modal"
+    id="myReservationModal"
+>
+
+    <div class="card">
+
+        <button
+            id="closeMyReservation"
+            class="close"
+            type="button"
+        >
+            ×
+        </button>
+
+
+        <p class="eyebrow">
+            МОЯ БРОНЬ
+        </p>
+
+
+        <h2>
+            Найти бронирование
+        </h2>
+
+
+        <p class="my-booking-description">
+            Введите номер брони и телефон,
+            который был указан при бронировании.
+        </p>
+
+
+        <form id="myReservationForm">
+
+            <label>
+                Номер брони
+
+                <input
+                    id="myReservationId"
+                    type="number"
+                    min="1"
+                    placeholder="Например, 12"
+                    required
+                >
+            </label>
+
+
+            <label>
+                Телефон
+
+                <input
+                    id="myReservationPhone"
+                    type="tel"
+                    placeholder="+7 777 123 45 67"
+                    required
+                >
+            </label>
+
+
+            <p
+                id="myReservationError"
+                class="error"
+            ></p>
+
+
+            <button
+                class="full"
+                type="submit"
+            >
+                Найти бронирование
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================
+     КАРТОЧКА МОЕЙ БРОНИ
+======================================== -->
+
+<div
+    class="modal"
+    id="myReservationCardModal"
+>
+
+    <div class="card">
+
+        <button
+            id="closeMyReservationCard"
+            class="close"
+            type="button"
+        >
+            ×
+        </button>
+
+
+        <p class="eyebrow">
+            МОЯ БРОНЬ
+        </p>
+
+
+        <h2>
+            Бронирование №<span id="myCardId"></span>
+        </h2>
+
+
+        <div class="my-status-row">
+
+            <span>
+                Статус
+            </span>
+
+            <strong
+                id="myCardStatus"
+                class="my-status"
+            >
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="my-booking-card">
+
+            <div>
+                <span>Имя</span>
+                <strong id="myCardName">—</strong>
+            </div>
+
+
+            <div>
+                <span>Телефон</span>
+                <strong id="myCardPhone">—</strong>
+            </div>
+
+
+            <div>
+                <span>Стол</span>
+                <strong id="myCardTable">—</strong>
+            </div>
+
+
+            <div>
+                <span>Гостей</span>
+                <strong id="myCardGuests">—</strong>
+            </div>
+
+
+            <div>
+                <span>Дата</span>
+                <strong id="myCardDate">—</strong>
+            </div>
+
+
+            <div>
+                <span>Время</span>
+                <strong id="myCardTime">—</strong>
+            </div>
+
+        </div>
+
+
+
+        <div id="myCardPreorder" class="my-preorder-card" hidden>
+            <div class="my-preorder-head">
+                <span>Предзаказ блюд</span>
+                <strong id="myCardPreorderTotal">0 ₸</strong>
+            </div>
+            <div id="myCardPreorderItems" class="my-preorder-items"></div>
+        </div>
+
+
+        <p
+            id="myCardMessage"
+            class="my-card-message"
+        ></p>
+
+
+        <button
+            id="cancelMyReservationButton"
+            class="cancel-reservation-button"
+            type="button"
+        >
+            Отменить бронирование
+        </button>
+
+
+        <button
+            id="backToSearchButton"
+            class="secondary-full"
+            type="button"
+        >
+            Назад
+        </button>
+
+    </div>
+
+</div>
+
+
+<footer>
+
+    <span>
+        TABLE
+    </span>
+
+    <span>
+        Система онлайн-бронирования столиков
+    </span>
+
+</footer>
+
+
+<script
+    src="{{ url_for('static', filename='js/script.js') }}"
+></script>
+
+</body>
+</html>

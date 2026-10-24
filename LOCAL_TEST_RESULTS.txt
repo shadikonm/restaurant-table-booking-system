@@ -1,0 +1,27 @@
+Exit code: 0
+
+Spreadsheet runtime warmup failed during python startup
+Traceback (most recent call last):
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/patches/warm_spreadsheet_runtime_on_startup.py", line 26, in warm_spreadsheet_runtime_on_startup
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/spreadsheet_warmup.py", line 785, in warm_spreadsheet_runtime
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/spreadsheet_warmup.py", line 718, in _warm_feature_flows
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/spreadsheet_warmup.py", line 509, in _warm_drawing_and_image_flows
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/generated/interface/models.py", line 32861, in bring_to_front
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/rpc/remote.py", line 764, in __call__
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/rpc/client.py", line 175, in call
+artifact_tool.rpc.client.RemoteError: Element ordering requires an owning element collection.
+test_name (test_business_rules.Rules.test_name) ... ok
+test_no_overlap_far_apart (test_business_rules.Rules.test_no_overlap_far_apart) ... ok
+test_no_overlap_on_boundary (test_business_rules.Rules.test_no_overlap_on_boundary) ... ok
+test_overlap (test_business_rules.Rules.test_overlap) ... ok
+test_phone (test_business_rules.Rules.test_phone) ... ok
+test_tables (test_business_rules.Rules.test_tables) ... ok
+test_admin_guest (test_http.HTTP.test_admin_guest) ... skipped 'Flask not installed'
+test_bad_availability_date (test_http.HTTP.test_bad_availability_date) ... skipped 'Flask not installed'
+test_home (test_http.HTTP.test_home) ... skipped 'Flask not installed'
+test_missing_availability (test_http.HTTP.test_missing_availability) ... skipped 'Flask not installed'
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.001s
+
+OK (skipped=4)

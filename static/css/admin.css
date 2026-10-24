@@ -1,0 +1,2465 @@
+/* =========================================================
+   БАЗОВЫЕ НАСТРОЙКИ
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: #f4f1eb;
+    color: #24231f;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* =========================================================
+   ШАПКА
+========================================================= */
+
+.admin-header {
+    min-height: 82px;
+    padding: 0 5%;
+    background: #ffffff;
+    border-bottom: 1px solid #ded9d0;
+
+    display: flex;
+    align-items: center;
+    gap: 34px;
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 27px;
+    font-weight: 700;
+    letter-spacing: 5px;
+    white-space: nowrap;
+}
+
+.admin-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.nav-tab {
+    border: none;
+    background: transparent;
+    color: #77736c;
+
+    padding: 11px 14px;
+
+    border-radius: 4px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    transition: 0.2s ease;
+}
+
+.nav-tab:hover {
+    background: #f3f0ea;
+    color: #24231f;
+}
+
+.nav-tab.active {
+    background: #24231f;
+    color: #ffffff;
+}
+
+.nav-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 21px;
+    height: 21px;
+
+    margin-left: 5px;
+    padding: 0 6px;
+
+    border-radius: 20px;
+
+    background: #b18a58;
+    color: #ffffff;
+
+    font-size: 11px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    font-size: 13px;
+}
+
+.header-actions a {
+    color: #625e57;
+}
+
+.header-actions a:hover {
+    color: #000000;
+}
+
+.admin-name {
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   ОСНОВНОЙ КОНТЕЙНЕР
+========================================================= */
+
+.admin-container {
+    width: min(1500px, 92%);
+    margin: 0 auto;
+    padding: 42px 0 70px;
+}
+
+.admin-page-section {
+    display: none;
+}
+
+.admin-page-section.active {
+    display: block;
+}
+
+
+/* =========================================================
+   ОБЩИЕ ЗАГОЛОВКИ
+========================================================= */
+
+.page-title {
+    margin-bottom: 30px;
+}
+
+.page-title h1,
+.section-heading h2,
+.panel-heading h2,
+.modal-card h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+}
+
+.page-title h1 {
+    margin: 4px 0 8px;
+    font-size: clamp(38px, 4vw, 58px);
+    line-height: 1;
+}
+
+.page-description {
+    max-width: 720px;
+    margin: 0;
+    color: #706c65;
+    line-height: 1.6;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+
+    color: #a57e4c;
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.section-heading,
+.panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.section-heading {
+    margin-bottom: 22px;
+}
+
+.section-heading h2,
+.panel-heading h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.panel-heading {
+    margin-bottom: 22px;
+}
+
+
+/* =========================================================
+   ДАШБОРД — ЗАГОЛОВОК
+========================================================= */
+
+.dashboard-title {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.dashboard-date {
+    color: #77736c;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   ДАШБОРД — KPI
+========================================================= */
+
+.dashboard-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+
+    margin-bottom: 18px;
+}
+
+.dashboard-kpi {
+    min-height: 150px;
+    padding: 22px;
+
+    background: #ffffff;
+    border: 1px solid #ddd8cf;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dashboard-kpi > span {
+    color: #77736c;
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.dashboard-kpi > strong {
+    display: block;
+
+    margin: 13px 0 8px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.dashboard-kpi > small {
+    color: #8a867f;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   ДАШБОРД — ОСНОВНАЯ СЕТКА
+========================================================= */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 18px;
+
+    margin-bottom: 18px;
+}
+
+.dashboard-panel {
+    background: #ffffff;
+    border: 1px solid #ddd8cf;
+
+    padding: 28px;
+
+    min-width: 0;
+}
+
+.dashboard-wide {
+    grid-column: auto;
+}
+
+
+/* =========================================================
+   ДАШБОРД — ГРАФИК 7 ДНЕЙ
+========================================================= */
+
+.dashboard-bar-chart {
+    height: 240px;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: stretch;
+    gap: 12px;
+
+    padding: 20px 8px 0;
+
+    border-bottom: 1px solid #ded9d0;
+}
+
+.dashboard-bar-column {
+    flex: 1;
+    height: 100%;
+
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.dashboard-bar-value {
+    margin-bottom: 8px;
+
+    color: #5f5a52;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dashboard-bar-fill {
+    width: min(52px, 70%);
+
+    min-height: 5px;
+
+    background: #a88455;
+
+    transition:
+        height 0.25s ease,
+        opacity 0.2s ease;
+}
+
+.dashboard-bar-fill:hover {
+    opacity: 0.72;
+}
+
+.dashboard-bar-label {
+    margin-top: 9px;
+    padding-bottom: 8px;
+
+    color: #77736c;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   ДАШБОРД — СТАТУСЫ
+========================================================= */
+
+.dashboard-status-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 19px;
+}
+
+.dashboard-progress-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    column-gap: 12px;
+}
+
+.dashboard-progress-title {
+    grid-column: 1 / -1;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 7px;
+
+    font-size: 13px;
+}
+
+.dashboard-progress-title span {
+    color: #55514b;
+}
+
+.dashboard-progress-title strong {
+    font-size: 14px;
+}
+
+.dashboard-progress-track {
+    height: 8px;
+
+    background: #eeeae3;
+
+    overflow: hidden;
+}
+
+.dashboard-progress-fill {
+    height: 100%;
+    min-width: 2px;
+
+    background: #a88455;
+}
+
+.dashboard-progress-row small {
+    color: #77736c;
+    font-size: 11px;
+    text-align: right;
+}
+
+
+/* =========================================================
+   ДАШБОРД — ЗАЛ / ТЕРРАСА
+========================================================= */
+
+.dashboard-zones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.dashboard-zone-card {
+    min-height: 135px;
+
+    padding: 20px;
+
+    background: #f7f4ef;
+    border: 1px solid #e3ded5;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.dashboard-zone-card > span {
+    color: #77736c;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.dashboard-zone-card > strong {
+    margin: 8px 0 4px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px;
+    font-weight: 400;
+}
+
+.dashboard-zone-card > small {
+    color: #77736c;
+}
+
+
+/* =========================================================
+   ДАШБОРД — РЕЙТИНГИ
+========================================================= */
+
+.dashboard-ranking {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.dashboard-ranking-row {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.dashboard-rank {
+    width: 28px;
+    height: 28px;
+
+    flex: 0 0 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #f1ede6;
+
+    color: #7a6b58;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dashboard-ranking-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dashboard-ranking-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+
+    margin-bottom: 7px;
+}
+
+.dashboard-ranking-title strong {
+    font-size: 13px;
+}
+
+.dashboard-ranking-title span {
+    color: #77736c;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.dashboard-ranking-track {
+    height: 6px;
+
+    background: #eeeae3;
+
+    overflow: hidden;
+}
+
+.dashboard-ranking-fill {
+    height: 100%;
+
+    background: #a88455;
+}
+
+
+/* =========================================================
+   ДАШБОРД — НИЖНИЕ СПИСКИ
+========================================================= */
+
+.dashboard-lists {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.dashboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dashboard-booking-item,
+.dashboard-preorder-item {
+    display: grid;
+    align-items: center;
+    gap: 12px;
+
+    padding: 14px 0;
+
+    border-bottom: 1px solid #ebe7df;
+}
+
+.dashboard-booking-item {
+    grid-template-columns:
+        90px
+        minmax(140px, 1fr)
+        90px
+        125px
+        auto;
+}
+
+.dashboard-preorder-item {
+    grid-template-columns:
+        65px
+        minmax(150px, 1fr)
+        65px
+        100px
+        auto;
+}
+
+.dashboard-booking-item:last-child,
+.dashboard-preorder-item:last-child {
+    border-bottom: none;
+}
+
+.dashboard-booking-date,
+.dashboard-booking-client,
+.dashboard-preorder-item > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.dashboard-booking-date strong,
+.dashboard-booking-client strong,
+.dashboard-preorder-item strong {
+    font-size: 13px;
+}
+
+.dashboard-booking-date span,
+.dashboard-booking-client span,
+.dashboard-preorder-item span {
+    color: #77736c;
+    font-size: 11px;
+}
+
+.dashboard-booking-table {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dashboard-small-label {
+    font-size: 9px !important;
+    letter-spacing: 1px;
+}
+
+.dashboard-empty {
+    padding: 35px 10px;
+
+    color: #8a867f;
+
+    text-align: center;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   ОБЫЧНАЯ СТАТИСТИКА
+========================================================= */
+
+.statistics,
+.tables-summary,
+.preorder-summary,
+.report-kpis {
+    display: grid;
+    gap: 14px;
+
+    margin-bottom: 25px;
+}
+
+.statistics {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.tables-summary,
+.preorder-summary {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.report-kpis {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.stat-card,
+.report-kpi {
+    background: #ffffff;
+    border: 1px solid #ddd8cf;
+
+    padding: 21px;
+}
+
+.stat-card span,
+.report-kpi span {
+    display: block;
+
+    color: #77736c;
+
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+}
+
+.stat-card strong,
+.report-kpi strong {
+    display: block;
+
+    margin-top: 10px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 32px;
+    font-weight: 400;
+}
+
+.report-kpi small {
+    display: block;
+
+    margin-top: 6px;
+
+    color: #8a867f;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   СЕКЦИИ
+========================================================= */
+
+.today-section,
+.all-section,
+.tables-management,
+.preorders-section,
+.report-panel {
+    margin-top: 18px;
+
+    padding: 27px;
+
+    background: #ffffff;
+    border: 1px solid #ddd8cf;
+}
+
+.today-date {
+    color: #77736c;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   СЕГОДНЯШНИЕ БРОНИ
+========================================================= */
+
+.today-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.today-card {
+    display: grid;
+    grid-template-columns:
+        80px
+        90px
+        minmax(180px, 1fr)
+        90px
+        130px
+        auto;
+
+    align-items: center;
+    gap: 15px;
+
+    padding: 15px 0;
+
+    border-bottom: 1px solid #ebe7df;
+}
+
+.today-card:last-child {
+    border-bottom: none;
+}
+
+.today-time {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 22px;
+}
+
+.today-table {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.today-client {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.today-client strong {
+    font-size: 14px;
+}
+
+.today-client span {
+    color: #77736c;
+    font-size: 12px;
+}
+
+.today-guests {
+    font-size: 13px;
+}
+
+.empty-today,
+.empty-state,
+.report-empty {
+    display: none;
+
+    padding: 35px 10px;
+
+    color: #8a867f;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   ФИЛЬТРЫ
+========================================================= */
+
+.toolbar,
+.preorder-toolbar {
+    display: grid;
+    align-items: end;
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.toolbar {
+    grid-template-columns:
+        minmax(240px, 1fr)
+        170px
+        190px
+        auto;
+}
+
+.preorder-toolbar {
+    grid-template-columns:
+        minmax(250px, 1fr)
+        180px
+        auto;
+}
+
+.toolbar > div,
+.preorder-toolbar > div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+label {
+    color: #5e5a54;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+
+    border: 1px solid #d7d2ca;
+
+    background: #ffffff;
+
+    padding: 11px 12px;
+
+    color: #24231f;
+
+    outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #a88455;
+}
+
+
+/* =========================================================
+   КНОПКИ
+========================================================= */
+
+.reset-button,
+.view-button,
+.primary-button,
+.secondary-button,
+.disable-table-button,
+.enable-table-button {
+    border: none;
+
+    padding: 11px 15px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    transition: 0.2s ease;
+}
+
+.reset-button,
+.secondary-button {
+    background: #ece8e1;
+    color: #35322e;
+}
+
+.reset-button:hover,
+.secondary-button:hover {
+    background: #dfdad1;
+}
+
+.view-button,
+.primary-button {
+    background: #282722;
+    color: #ffffff;
+}
+
+.view-button:hover,
+.primary-button:hover {
+    background: #47443e;
+}
+
+.disable-table-button {
+    background: #f1e5e2;
+    color: #8a4239;
+}
+
+.enable-table-button {
+    background: #e5eee6;
+    color: #3e6846;
+}
+
+.full-button {
+    width: 100%;
+}
+
+
+/* =========================================================
+   ТАБЛИЦА БРОНЕЙ
+========================================================= */
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #f4f1eb;
+}
+
+th,
+td {
+    padding: 13px 11px;
+
+    border-bottom: 1px solid #e6e1d9;
+
+    text-align: left;
+    white-space: nowrap;
+
+    font-size: 12px;
+}
+
+th {
+    color: #68645e;
+
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.client-name {
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   СТАТУСЫ
+========================================================= */
+
+.status {
+    display: inline-flex;
+
+    padding: 6px 9px;
+
+    border-radius: 2px;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+.status-confirmed {
+    background: #eee8d8;
+    color: #795f27;
+}
+
+.status-arrived {
+    background: #dfeae1;
+    color: #35613e;
+}
+
+.status-completed {
+    background: #e4e4e4;
+    color: #505050;
+}
+
+.status-cancelled {
+    background: #f0dddd;
+    color: #8a3e3e;
+}
+
+
+/* =========================================================
+   ОПЛАТА
+========================================================= */
+
+.payment-admin {
+    display: inline-flex;
+
+    padding: 6px 9px;
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.payment-admin.paid {
+    background: #dfeae1;
+    color: #35613e;
+}
+
+.payment-admin.unpaid {
+    background: #eee8d8;
+    color: #795f27;
+}
+
+.payment-admin.refunded {
+    background: #e5e5e5;
+    color: #555555;
+}
+
+
+/* =========================================================
+   УПРАВЛЕНИЕ СТОЛАМИ
+========================================================= */
+
+.admin-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.admin-table-card {
+    padding: 19px;
+
+    background: #f9f7f3;
+    border: 1px solid #ddd8cf;
+}
+
+.admin-table-card.is-disabled {
+    opacity: 0.65;
+    background: #f0eeea;
+}
+
+.table-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.admin-table-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.table-number {
+    color: #9a774b;
+
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.admin-table-info strong {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 22px;
+    font-weight: 400;
+}
+
+.admin-table-characteristics {
+    display: block;
+
+    margin-top: 7px;
+
+    color: #77736c;
+    line-height: 1.5;
+}
+
+.table-state {
+    padding: 5px 7px;
+
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.table-state.active {
+    background: #dfeae1;
+    color: #35613e;
+}
+
+.table-state.disabled {
+    background: #f0dddd;
+    color: #8a3e3e;
+}
+
+.admin-table-card p {
+    min-height: 38px;
+
+    margin: 15px 0;
+
+    color: #77736c;
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.table-toggle-button {
+    width: 100%;
+}
+
+
+/* =========================================================
+   ОТЧЁТЫ
+========================================================= */
+
+.reports-title {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.report-period {
+    width: 210px;
+}
+
+.report-period label {
+    display: block;
+    margin-bottom: 7px;
+}
+
+.report-highlights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+
+    margin-bottom: 18px;
+}
+
+.highlight-card {
+    padding: 21px;
+
+    background: #ffffff;
+    border: 1px solid #ddd8cf;
+}
+
+.highlight-card span {
+    display: block;
+
+    color: #77736c;
+
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.highlight-card strong {
+    display: block;
+
+    margin: 9px 0 5px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 29px;
+    font-weight: 400;
+}
+
+.highlight-card small {
+    color: #8a867f;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 18px;
+}
+
+.report-panel {
+    margin-top: 0;
+}
+
+.bar-chart {
+    height: 230px;
+
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+
+    padding-top: 15px;
+
+    border-bottom: 1px solid #ddd8cf;
+}
+
+.bar-column {
+    flex: 1;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.bar-value {
+    margin-bottom: 5px;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.bar-fill {
+    width: min(42px, 70%);
+    min-height: 4px;
+
+    background: #a88455;
+}
+
+.bar-label {
+    margin-top: 7px;
+    padding-bottom: 7px;
+
+    color: #77736c;
+
+    font-size: 9px;
+}
+
+.status-report {
+    display: flex;
+    flex-direction: column;
+    gap: 17px;
+}
+
+.status-report-row {
+    display: grid;
+    grid-template-columns: 105px 1fr 35px;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 11px;
+}
+
+.progress-track {
+    height: 7px;
+    background: #eeeae3;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #a88455;
+}
+
+.status-report-row strong {
+    text-align: right;
+}
+
+.table-load-panel {
+    margin-top: 18px;
+}
+
+.table-load {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
+}
+
+.table-load-card {
+    padding: 15px 10px;
+
+    background: #f7f4ef;
+    border: 1px solid #e3ded5;
+
+    text-align: center;
+}
+
+.table-load-card span,
+.table-load-card small {
+    display: block;
+    color: #77736c;
+    font-size: 10px;
+}
+
+.table-load-card strong {
+    display: block;
+
+    margin: 7px 0;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 26px;
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   ПРЕДЗАКАЗЫ
+========================================================= */
+
+.preorders-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.preorder-admin-card {
+    display: grid;
+
+    grid-template-columns:
+        70px
+        minmax(160px, 1.2fr)
+        minmax(120px, 1fr)
+        120px
+        70px
+        130px
+        auto;
+
+    align-items: center;
+    gap: 14px;
+
+    padding: 16px 0;
+
+    border-bottom: 1px solid #e8e3db;
+}
+
+.preorder-admin-card:last-child {
+    border-bottom: none;
+}
+
+.preorder-card-id,
+.preorder-card-client,
+.preorder-card-meta,
+.preorder-card-date,
+.preorder-card-items,
+.preorder-card-total {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.preorder-card-id span,
+.preorder-card-client span,
+.preorder-card-meta span,
+.preorder-card-date span,
+.preorder-card-items span {
+    color: #77736c;
+    font-size: 10px;
+}
+
+.preorder-card-id strong,
+.preorder-card-client strong,
+.preorder-card-date strong,
+.preorder-card-items strong,
+.preorder-card-total strong {
+    font-size: 13px;
+}
+
+.preorder-card-total {
+    align-items: flex-start;
+}
+
+
+/* =========================================================
+   МОДАЛЬНЫЕ ОКНА
+========================================================= */
+
+.modal {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    z-index: 1000;
+
+    padding: 25px;
+
+    background: rgba(0, 0, 0, 0.48);
+
+    align-items: center;
+    justify-content: center;
+
+    overflow-y: auto;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-card {
+    position: relative;
+
+    width: min(620px, 100%);
+
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+
+    padding: 31px;
+
+    background: #ffffff;
+    border: 1px solid #ddd8cf;
+}
+
+.preorder-modal-card {
+    width: min(760px, 100%);
+}
+
+.modal-card h2 {
+    margin: 4px 0 25px;
+    font-size: 31px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 17px;
+
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    background: #f1ede6;
+
+    font-size: 22px;
+    line-height: 1;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 13px;
+
+    margin-bottom: 20px;
+}
+
+.details-grid > div {
+    padding: 13px;
+
+    background: #f7f4ef;
+}
+
+.details-grid span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #77736c;
+
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.details-grid strong {
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.details-status {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+
+    margin-top: 20px;
+}
+
+.details-status label {
+    grid-column: 1 / -1;
+}
+
+.form-error {
+    min-height: 18px;
+
+    margin: 9px 0;
+
+    color: #a63f36;
+
+    font-size: 12px;
+}
+
+.secondary-button {
+    width: 100%;
+    margin-top: 7px;
+}
+
+
+/* =========================================================
+   ФОРМА РЕДАКТИРОВАНИЯ
+========================================================= */
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 7px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+
+/* =========================================================
+   МОДАЛЬНОЕ ОКНО ПРЕДЗАКАЗА
+========================================================= */
+
+.preorder-modal-section {
+    margin-top: 22px;
+}
+
+.preorder-details-items {
+    border-top: 1px solid #e4dfd7;
+}
+
+.preorder-details-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    padding: 14px 0;
+
+    border-bottom: 1px solid #e4dfd7;
+}
+
+.preorder-details-row > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.preorder-details-row > div:first-child span {
+    color: #77736c;
+    font-size: 10px;
+}
+
+.preorder-details-calculation {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+
+    white-space: nowrap;
+}
+
+.preorder-details-calculation span {
+    color: #77736c;
+    font-size: 11px;
+}
+
+.preorder-note {
+    margin: 0;
+
+    padding: 14px;
+
+    background: #f7f4ef;
+
+    color: #55514b;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   АДАПТИВНОСТЬ
+========================================================= */
+
+@media (max-width: 1250px) {
+
+    .dashboard-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .statistics {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .admin-tables-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .table-load {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .preorder-admin-card {
+        grid-template-columns:
+            60px
+            minmax(140px, 1fr)
+            100px
+            110px
+            65px
+            120px
+            auto;
+    }
+}
+
+
+@media (max-width: 1050px) {
+
+    .admin-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+
+        padding-top: 18px;
+        padding-bottom: 18px;
+    }
+
+    .admin-nav {
+        order: 3;
+
+        width: 100%;
+
+        overflow-x: auto;
+    }
+
+    .dashboard-grid,
+    .dashboard-lists,
+    .report-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-wide {
+        grid-column: auto;
+    }
+
+    .report-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .preorder-admin-card {
+        grid-template-columns:
+            70px
+            1fr
+            110px
+            auto;
+    }
+
+    .preorder-card-meta,
+    .preorder-card-items {
+        display: none;
+    }
+}
+
+
+@media (max-width: 800px) {
+
+    .admin-container {
+        width: 94%;
+        padding-top: 28px;
+    }
+
+    .dashboard-title,
+    .reports-title {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-kpis,
+    .statistics,
+    .tables-summary,
+    .preorder-summary,
+    .report-kpis,
+    .report-highlights {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .admin-tables-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .toolbar,
+    .preorder-toolbar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .toolbar .search-field,
+    .preorder-toolbar > div:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .today-card {
+        grid-template-columns:
+            65px
+            70px
+            1fr
+            auto;
+    }
+
+    .today-guests,
+    .today-card > div:nth-child(5) {
+        display: none;
+    }
+
+    .dashboard-booking-item {
+        grid-template-columns:
+            80px
+            1fr
+            auto;
+    }
+
+    .dashboard-booking-table,
+    .dashboard-booking-item > div:nth-child(4) {
+        display: none;
+    }
+
+    .dashboard-preorder-item {
+        grid-template-columns:
+            55px
+            1fr
+            auto;
+    }
+
+    .dashboard-preorder-item > div:nth-child(3),
+    .dashboard-preorder-item > div:nth-child(4) {
+        display: none;
+    }
+
+    .table-load {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+
+@media (max-width: 560px) {
+
+    .admin-header {
+        gap: 15px;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .dashboard-kpis,
+    .statistics,
+    .tables-summary,
+    .preorder-summary,
+    .report-kpis,
+    .report-highlights,
+    .admin-tables-grid,
+    .dashboard-zones {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-panel,
+    .today-section,
+    .all-section,
+    .tables-management,
+    .preorders-section,
+    .report-panel {
+        padding: 20px;
+    }
+
+    .dashboard-bar-chart {
+        height: 190px;
+        gap: 5px;
+    }
+
+    .toolbar,
+    .preorder-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .toolbar .search-field,
+    .preorder-toolbar > div:first-child {
+        grid-column: auto;
+    }
+
+    .today-card {
+        grid-template-columns:
+            65px
+            1fr
+            auto;
+    }
+
+    .today-table {
+        display: none;
+    }
+
+    .details-grid,
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .details-status {
+        grid-template-columns: 1fr;
+    }
+
+    .preorder-admin-card {
+        grid-template-columns:
+            55px
+            1fr
+            auto;
+    }
+
+    .preorder-card-date,
+    .preorder-card-total {
+        display: none;
+    }
+
+    .table-load {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .preorder-details-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .preorder-details-calculation {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* =========================================================
+   СТАТУС ПРЕДЗАКАЗА НА КУХНЕ
+========================================================= */
+.preorder-status { display:inline-flex; align-items:center; padding:6px 10px; font-size:10px; font-weight:800; white-space:nowrap; }
+.preorder-status-new { background:#eee8d8; color:#795f27; }
+.preorder-status-preparing { background:#f4e2cf; color:#8a5426; }
+.preorder-status-ready { background:#dfeae1; color:#35613e; }
+.preorder-kitchen-status { margin:20px 0 4px; padding:18px; background:#f7f4ef; border:1px solid #e3ded5; }
+.preorder-kitchen-status > div:first-child { display:flex; align-items:center; justify-content:space-between; gap:15px; }
+.preorder-kitchen-status .eyebrow { margin:0; }
+.preorder-kitchen-controls { display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:14px; }
+.preorder-kitchen-controls select { min-width:180px; }
+.preorder-card-status { display:flex; flex-direction:column; gap:5px; align-items:flex-start; }
+@media (max-width:560px){ .preorder-kitchen-controls { grid-template-columns:1fr; } }
+/* =========================================================
+   DASHBOARD — УЛУЧШЕННЫЕ ГРАФИКИ
+   ========================================================= */
+
+/* Общие карточки аналитики */
+
+.dashboard-panel {
+    background: #ffffff;
+    border: 1px solid #ded8ce;
+    padding: 30px;
+    min-height: 320px;
+    box-sizing: border-box;
+}
+
+.dashboard-panel h2 {
+    margin: 4px 0 26px;
+}
+
+.dashboard-empty {
+    color: #8c877e;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   ГРАФИК БРОНИРОВАНИЙ — 7 ДНЕЙ
+   ========================================================= */
+
+#dashboardBookingChart {
+    height: 250px;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    padding: 20px 10px 0;
+    border-bottom: 1px solid #ded8ce;
+
+    background-image:
+        linear-gradient(
+            to top,
+            rgba(120, 110, 95, 0.08) 1px,
+            transparent 1px
+        );
+
+    background-size: 100% 50px;
+}
+
+.dashboard-chart-column {
+    flex: 1;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+
+    position: relative;
+}
+
+.dashboard-chart-column strong {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #2e2b27;
+}
+
+.dashboard-chart-column > span {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #777168;
+}
+
+.dashboard-chart-bar {
+    width: 55%;
+    max-width: 50px;
+    min-width: 18px;
+
+    min-height: 4px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #b58a52 0%,
+            #8c6638 100%
+        );
+
+    border-radius: 7px 7px 2px 2px;
+
+    box-shadow:
+        0 4px 12px
+        rgba(120, 84, 42, 0.14);
+
+    transition:
+        height 0.35s ease,
+        transform 0.2s ease;
+}
+
+.dashboard-chart-column:hover
+.dashboard-chart-bar {
+    transform: translateY(-3px);
+}
+
+
+/* =========================================================
+   СТАТУСЫ — DONUT
+   ========================================================= */
+
+#dashboardStatuses {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 30px;
+    align-items: center;
+}
+
+.dashboard-status-donut {
+    width: 145px;
+    height: 145px;
+
+    border-radius: 50%;
+
+    position: relative;
+
+    flex-shrink: 0;
+}
+
+.dashboard-status-donut::after {
+    content: "";
+
+    position: absolute;
+
+    width: 88px;
+    height: 88px;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    background: #ffffff;
+
+    border-radius: 50%;
+}
+
+.dashboard-status-center {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    z-index: 2;
+
+    text-align: center;
+}
+
+.dashboard-status-center strong {
+    display: block;
+
+    font-size: 26px;
+
+    line-height: 1;
+
+    color: #27231f;
+}
+
+.dashboard-status-center span {
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    color: #8a8379;
+}
+
+.dashboard-status-legend {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.dashboard-status-legend-row {
+    display: grid;
+
+    grid-template-columns:
+        10px
+        1fr
+        auto;
+
+    gap: 9px;
+
+    align-items: center;
+
+    font-size: 13px;
+}
+
+.dashboard-status-dot {
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+}
+
+.dashboard-status-dot.confirmed {
+    background: #b58a52;
+}
+
+.dashboard-status-dot.arrived {
+    background: #6e9278;
+}
+
+.dashboard-status-dot.completed {
+    background: #7f7b76;
+}
+
+.dashboard-status-dot.cancelled {
+    background: #b86861;
+}
+
+
+/* =========================================================
+   ЗАЛ / ТЕРРАСА — DONUT
+   ========================================================= */
+
+#dashboardZones {
+    display: grid;
+
+    grid-template-columns:
+        160px
+        1fr;
+
+    gap: 35px;
+
+    align-items: center;
+}
+
+.dashboard-zone-donut {
+    width: 150px;
+    height: 150px;
+
+    border-radius: 50%;
+
+    position: relative;
+}
+
+.dashboard-zone-donut::after {
+    content: "";
+
+    position: absolute;
+
+    width: 92px;
+    height: 92px;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    background: #ffffff;
+
+    border-radius: 50%;
+}
+
+.dashboard-zone-center {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    z-index: 2;
+
+    text-align: center;
+}
+
+.dashboard-zone-center strong {
+    display: block;
+
+    font-size: 25px;
+
+    color: #292621;
+}
+
+.dashboard-zone-center span {
+    font-size: 11px;
+
+    color: #817a70;
+}
+
+.dashboard-zone-legend {
+    display: flex;
+    flex-direction: column;
+
+    gap: 18px;
+}
+
+.dashboard-zone-legend-row {
+    display: grid;
+
+    grid-template-columns:
+        12px
+        1fr
+        auto;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.dashboard-zone-dot {
+    width: 11px;
+    height: 11px;
+
+    border-radius: 50%;
+}
+
+.dashboard-zone-dot.hall {
+    background: #a67b45;
+}
+
+.dashboard-zone-dot.terrace {
+    background: #78906d;
+}
+
+.dashboard-zone-legend-row strong {
+    font-size: 14px;
+}
+
+.dashboard-zone-legend-row span {
+    color: #777168;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   TOP СТОЛИКОВ / ПОПУЛЯРНЫЕ ЧАСЫ
+   ========================================================= */
+
+.dashboard-ranking-row {
+    display: grid;
+
+    grid-template-columns:
+        35px
+        135px
+        1fr
+        32px;
+
+    gap: 14px;
+
+    align-items: center;
+
+    margin-bottom: 14px;
+}
+
+.dashboard-rank {
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #f1ede6;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    color: #7a6a55;
+}
+
+.dashboard-ranking-info {
+    min-width: 0;
+}
+
+.dashboard-ranking-info strong {
+    display: block;
+
+    font-size: 14px;
+
+    margin-bottom: 3px;
+}
+
+.dashboard-ranking-info small {
+    display: block;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    color: #847d73;
+
+    font-size: 10px;
+}
+
+.dashboard-ranking-bar-track {
+    height: 9px;
+
+    background: #eeeae3;
+
+    overflow: hidden;
+
+    border-radius: 10px;
+}
+
+.dashboard-ranking-bar {
+    height: 100%;
+
+    min-width: 4px;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #c39b66,
+            #956c3c
+        );
+}
+
+.dashboard-ranking-count {
+    text-align: right;
+
+    font-weight: 700;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   БЛИЖАЙШИЕ БРОНИ
+   ========================================================= */
+
+#dashboardUpcoming {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+.dashboard-upcoming-card {
+    border: 1px solid #ded8ce;
+
+    background: #faf8f4;
+
+    padding: 16px;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.dashboard-upcoming-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #b28a58;
+
+    box-shadow:
+        0 8px 18px
+        rgba(68, 55, 39, 0.08);
+}
+
+.dashboard-upcoming-card strong {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #292621;
+}
+
+.dashboard-upcoming-card span {
+    display: block;
+
+    color: #777168;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   ПОСЛЕДНИЕ ПРЕДЗАКАЗЫ
+   ========================================================= */
+
+#dashboardRecentPreorders {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+.dashboard-preorder-card {
+    border: 1px solid #ded8ce;
+
+    background: #faf8f4;
+
+    padding: 16px;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.dashboard-preorder-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 18px
+        rgba(68, 55, 39, 0.08);
+}
+
+.dashboard-preorder-card strong {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #292621;
+}
+
+.dashboard-preorder-card span {
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    #dashboardStatuses,
+    #dashboardZones {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-status-donut,
+    .dashboard-zone-donut {
+        margin: 0 auto;
+    }
+
+    #dashboardUpcoming,
+    #dashboardRecentPreorders {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-ranking-row {
+        grid-template-columns:
+            30px
+            110px
+            1fr
+            25px;
+    }
+}
+
+/* =========================================================
+   ЖУРНАЛ ДЕЙСТВИЙ АДМИНИСТРАТОРА
+   ========================================================= */
+.logs-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:25px; }
+.logs-section { margin-top:18px; padding:27px; background:#fff; border:1px solid #ddd8cf; }
+.logs-refresh-button { width:auto; margin-top:0; }
+.logs-toolbar { display:grid; grid-template-columns:minmax(260px,1fr) 240px auto; align-items:end; gap:12px; margin-bottom:20px; }
+.logs-toolbar > div { display:flex; flex-direction:column; gap:7px; }
+.logs-table td { vertical-align:top; }
+.log-date { color:#625e57; font-variant-numeric:tabular-nums; }
+.log-action { display:inline-flex; padding:6px 9px; background:#eeeae3; color:#5c554b; font-size:10px; font-weight:800; white-space:nowrap; }
+.log-action-reservation_status_changed { background:#eee8d8; color:#795f27; }
+.log-action-preorder_status_changed { background:#f4e2cf; color:#8a5426; }
+.log-action-table_status_changed { background:#e5eee6; color:#3e6846; }
+.log-action-reservation_cancelled { background:#f0dddd; color:#8a3e3e; }
+.log-action-reservation_edited { background:#e8e5ef; color:#5b4d72; }
+.log-description { display:block; margin-bottom:7px; color:#35322e; white-space:normal; line-height:1.4; }
+.log-change { display:flex; align-items:center; flex-wrap:wrap; gap:7px; white-space:normal; }
+.log-old,.log-new { padding:4px 7px; background:#f5f2ed; color:#625e57; font-size:10px; line-height:1.4; }
+.log-new { background:#ece7de; color:#3f3a33; font-weight:700; }
+.log-arrow { color:#a57e4c; font-weight:800; }
+
+@media (max-width:900px) {
+    .logs-summary { grid-template-columns:1fr 1fr; }
+    .logs-toolbar { grid-template-columns:1fr 1fr; }
+    .logs-toolbar .search-field { grid-column:1/-1; }
+}
+@media (max-width:560px) {
+    .logs-summary,.logs-toolbar { grid-template-columns:1fr; }
+    .logs-toolbar .search-field { grid-column:auto; }
+    .logs-section { padding:20px; }
+}
