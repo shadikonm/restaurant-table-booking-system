@@ -1,0 +1,92 @@
+
+name: Weekly PM Report
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 1"
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  pm-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate PM report
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p reports
+
+          echo "# Weekly PM Report" > reports/pm_weekly.md
+          echo "" >> reports/pm_weekly.md
+          echo "Repository: $GH_REPO" >> reports/pm_weekly.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M UTC')" >> reports/pm_weekly.md
+          echo "" >> reports/pm_weekly.md
+
+          gh issue list --repo "$GH_REPO" \
+            --state all --limit 500 \
+            --json number,title,state,labels,createdAt,closedAt \
+            > reports/issues.json
+
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+
+          with open("reports/issues.json", encoding="utf-8") as f:
+              issues = json.load(f)
+
+          opened = [i for i in issues if i["state"] == "OPEN"]
+          closed = [i for i in issues if i["state"] == "CLOSED"]
+
+          blockers = [
+              i for i in opened
+              if any(
+                  label["name"].lower() in ("blocked", "blocker")
+                  for label in i["labels"]
+              )
+          ]
+
+          now = datetime.now(timezone.utc)
+          recent = [
+              i for i in closed
+              if i["closedAt"]
+              and (now - datetime.fromisoformat(
+                  i["closedAt"].replace("Z", "+00:00")
+              )).days < 7
+          ]
+
+          with open("reports/pm_weekly.md", "a", encoding="utf-8") as f:
+              f.write(f"## Metrics\n\n")
+              f.write(f"- Total issues: {len(issues)}\n")
+              f.write(f"- Open issues: {len(opened)}\n")
+              f.write(f"- Closed issues: {len(closed)}\n")
+              f.write(f"- Closed in last 7 days: {len(recent)}\n")
+              f.write(f"- Open blockers: {len(blockers)}\n\n")
+
+              f.write("## Open blockers\n\n")
+              if blockers:
+                  for i in blockers:
+                      f.write(f"- #{i['number']} {i['title']}\n")
+              else:
+                  f.write("No issues labeled blocked/blocker.\n")
+
+              f.write("\n## Recently closed\n\n")
+              for i in recent:
+                  f.write(f"- #{i['number']} {i['title']}\n")
+
+          print(open("reports/pm_weekly.md", encoding="utf-8").read())
+          PY
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-pm-report
+          path: reports/
