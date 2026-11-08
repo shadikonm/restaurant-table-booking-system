@@ -14,6 +14,7 @@ let adminLogs = [];
 function statusText(status) {
     const statuses = {
         confirmed: "Подтверждено",
+        pending_payment: "Ожидает оплаты",
         arrived: "Гость пришёл",
         completed: "Завершено",
         cancelled: "Отменено"
@@ -3130,6 +3131,12 @@ function getFilteredAdminLogs() {
     });
 }
 
+function escapeLogHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[ch]);
+}
+
 function renderAdminLogs() {
     const table = $("logsTable");
     const empty = $("logsEmpty");
@@ -3162,15 +3169,15 @@ function renderAdminLogs() {
         const row = document.createElement("tr");
         const oldText = adminLogValueText(log.old_value, log.action_type);
         const newText = adminLogValueText(log.new_value, log.action_type);
-        let changeHtml = `<span class="log-description">${log.description || "—"}</span>`;
+        let changeHtml = `<span class="log-description">${escapeLogHtml(log.description || "—")}</span>`;
         if (log.old_value !== null || log.new_value !== null) {
-            changeHtml += `<div class="log-change"><span class="log-old">${oldText}</span><span class="log-arrow">→</span><span class="log-new">${newText}</span></div>`;
+            changeHtml += `<div class="log-change"><span class="log-old">${escapeLogHtml(oldText)}</span><span class="log-arrow">→</span><span class="log-new">${escapeLogHtml(newText)}</span></div>`;
         }
         row.innerHTML = `
             <td class="log-date">${formatAdminLogDate(log.created_at)}</td>
-            <td><strong>${log.admin_username || "admin"}</strong></td>
-            <td><span class="log-action log-action-${log.action_type || "default"}">${adminLogActionText(log.action_type)}</span></td>
-            <td>${adminLogEntityText(log)}</td>
+            <td><strong>${escapeLogHtml(log.admin_username || "admin")}</strong></td>
+            <td><span class="log-action log-action-${log.action_type || "default"}">${escapeLogHtml(adminLogActionText(log.action_type))}</span></td>
+            <td>${escapeLogHtml(adminLogEntityText(log))}</td>
             <td>${changeHtml}</td>
         `;
         table.appendChild(row);

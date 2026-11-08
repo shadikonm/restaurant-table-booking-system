@@ -15,6 +15,11 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='css/account.css') }}"
     >
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/preferences.css') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="{{ url_for('static', filename='js/security.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/improvements.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/assistant.css') }}">
 </head>
 
 <body>
@@ -113,6 +118,27 @@
     </section>
 
 
+    <section class="account-extra" aria-labelledby="profile-edit-title">
+      <details class="account-profile-edit">
+        <summary id="profile-edit-title">Редактировать профиль</summary>
+        {% if request.args.get('profile_error') %}<p role="alert">Введите имя (2–50 символов) и корректный телефон.</p>{% endif %}
+        {% if request.args.get('profile_saved') %}<p role="status">Профиль сохранён.</p>{% endif %}
+        <form action="{{ url_for('update_profile') }}" method="POST" class="account-profile-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label>Имя <input name="name" value="{{ user['name'] }}" minlength="2" maxlength="50" required autocomplete="name"></label>
+          <label>Телефон <input name="phone" value="{{ user['phone'] }}" required autocomplete="tel"></label>
+          <button type="submit">Сохранить профиль</button>
+        </form>
+      </details>
+      <p class="account-history-note">История посещений: завершённые и прошедшие бронирования сохраняются ниже в списке. Для просмотра используйте фильтр.</p>
+      <div class="account-history-filters" role="group" aria-label="Фильтр бронирований">
+        <button type="button" class="history-filter is-active" data-history-filter="all" aria-pressed="true">Все</button>
+        <button type="button" class="history-filter" data-history-filter="upcoming" aria-pressed="false">Предстоящие</button>
+        <button type="button" class="history-filter" data-history-filter="history" aria-pressed="false">История</button>
+      </div>
+    </section>
+
     <!-- =========================================
          БРОНИРОВАНИЯ
          ========================================= -->
@@ -150,7 +176,7 @@
 
                 {% for r in reservations %}
 
-                    <article class="reservation-card">
+                    <article class="reservation-card" data-booking-date="{{ r['reservation_date'] }}" data-booking-time="{{ r['reservation_time'] }}" data-booking-status="{{ r['status'] }}">
 
 
                         <!-- ВЕРХ КАРТОЧКИ -->
@@ -174,7 +200,7 @@
                                 class="status status-{{ r['status'] }}"
                             >
 
-                                {% if r['status'] == 'confirmed' %}
+                                {% if r['status'] in ['confirmed', 'pending_payment'] %}
 
                                     Подтверждено
 
@@ -182,6 +208,8 @@
 
                                     Гость пришёл
 
+                                {% elif r['status'] == 'pending_payment' %}
+                                    Ожидает оплаты
                                 {% elif r['status'] == 'completed' %}
 
                                     Завершено
@@ -309,13 +337,16 @@
                         {% endif %}
 
                         <!-- ОПЛАТА -->
+                        {% if r["deposit_required"] %}
 
                         <div
                             class="
                                 payment-box
                                 {% if r['payment_status'] == 'paid' %}
                                     payment-box-paid
-                                {% elif r['payment_status'] == 'refunded' %}
+                                    <a class="pay-button" style="display:inline-flex;margin-top:12px" href="{{ url_for('payment_success', rid=r['id']) }}">Посмотреть чек</a>
+
+                            {% elif r['payment_status'] == 'refunded' %}
                                     payment-box-refunded
                                 {% endif %}
                             "
@@ -427,15 +458,19 @@
                         </div>
 
 
+                        {% endif %}
+
+                        {% if r['status'] == 'pending_payment' and r['payment_deadline'] %}<p>Оплатите до {{ r['payment_deadline'] }}. Затем стол освободится автоматически.</p>{% endif %}
                         <!-- КНОПКИ -->
 
                         <div class="reservation-actions">
 
 
                             {% if
-                                r['status'] == 'confirmed'
+                                r['status'] == 'pending_payment'
                                 and
                                 r['payment_status'] != 'paid'
+                                and r['deposit_required']
                             %}
 
                                 <a
@@ -448,13 +483,14 @@
                             {% endif %}
 
 
-                            {% if r['status'] == 'confirmed' %}
+                            {% if r['status'] in ['confirmed', 'pending_payment'] %}
 
                                 <form
     action="{{ url_for('account_cancel_reservation', rid=r['id']) }}"
     method="POST"
     class="cancel-form"
 >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <button
         class="cancel-button"
@@ -508,6 +544,9 @@
 
 </main>
 
+    <script src="{{ url_for('static', filename='js/preferences.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/account_enhancements.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/assistant.js') }}" defer></script>
 </body>
 
 </html>

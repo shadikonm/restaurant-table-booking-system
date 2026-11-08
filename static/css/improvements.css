@@ -1,0 +1,15 @@
+/* Accessible, responsive enhancements; existing button behavior unchanged. */
+:focus-visible { outline: 3px solid #2475bf !important; outline-offset: 3px; }
+[hidden] { display: none !important; }
+.account-extra { max-width: 1080px; margin: 20px auto 28px; padding: 0 16px; }
+.account-profile-edit { border: 1px solid #b6b6b6; border-radius: 12px; padding: 15px 20px; margin-bottom: 14px; }
+.account-profile-edit summary { cursor: pointer; font-weight: 700; }
+.account-profile-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 16px; }
+.account-profile-form label { display: grid; gap: 6px; min-width: 180px; flex: 1; }
+.account-profile-form input { padding: 11px; border: 1px solid #999; border-radius: 8px; background: var(--card-bg, #fff); color: var(--text-color, #222); }
+.account-profile-form button, .history-filter { border: 1px solid #888; border-radius: 8px; padding: 10px 15px; cursor: pointer; background: var(--card-bg, #fff); color: var(--text-color, #222); }
+.history-filter.is-active { outline: 2px solid #8a6c45; font-weight: 700; }
+.account-history-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.account-history-note { line-height: 1.5; }
+@media (max-width: 640px) { .account-profile-form { flex-direction: column; align-items: stretch; } .account-profile-form label { width: 100%; } .account-extra { padding: 0 12px; } button, a, select, input { max-width: 100%; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
