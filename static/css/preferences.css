@@ -1,0 +1,87 @@
+/* Shared theme / language controls. Existing buttons and their behavior remain unchanged. */
+.table-preferences{position:fixed;z-index:2147483000;right:18px;bottom:18px;display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid rgba(150,140,125,.35);border-radius:16px;background:#fff;color:#292621;box-shadow:0 8px 30px rgba(0,0,0,.16);font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1}
+.table-preferences-themes,.table-preferences-languages{display:flex;gap:3px;align-items:center}
+.table-preferences button{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:31px;height:32px;border:0;border-radius:9px;background:transparent;color:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0 7px;box-shadow:none;line-height:1}
+.table-preferences button[data-theme-choice]{font-size:18px}
+.table-preferences button.is-selected{background:#a1845c;color:#fff}
+.table-preferences button:focus-visible{outline:2px solid #a1845c;outline-offset:2px}
+.table-preferences-divider{height:22px;width:1px;background:rgba(150,140,125,.35)}
+@media(max-width:550px){.table-preferences{right:8px;bottom:8px;padding:5px;gap:4px}.table-preferences button{min-width:27px;height:30px;padding:0 5px}}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] body{background:#151719!important;color:#e8e5e0!important}
+html[data-theme="dark"] .table-preferences{background:#24282c;color:#f1ece4;border-color:#42464a}
+/* Surface overrides for all existing pages without altering layout or click handlers */
+html[data-theme="dark"] :is(main,section,article,aside,nav,header,footer,div,form,fieldset,table,thead,tbody,tr,td,th,ul,li):not(.table-preferences):not(.table-preferences *):not([class*="bar-fill"]):not([class*="chart-bar"]):not([class*="progress-fill"]):not([class*="donut"]):not([class*="status-dot"]):not([class*="zone-dot"]){border-color:#3d4247}
+html[data-theme="dark"] :is(.booking-card,.booking-panel,.booking-form,.reservation-card,.account-card,.profile-card,.auth-card,.login-card,.pay-card,.admin-card,.dashboard-card,.dashboard-panel,.stat-card,.stats-card,.report-card,.table-card,.admin-table-card,.preorder-admin-card,.preorder-card,.modal-content,.modal-card,.details-card,.edit-card,.dashboard-upcoming-card,.dashboard-preorder-card,.table-load-card,.info-card,.summary-card,.filter-panel,.filters,.section-card,.card,.panel,.account-section,.admin-section,.preorder-details-row,.dashboard-ranking-row,.status-report-row){background:#24282c!important;color:#eae6df!important;border-color:#3b4146!important}
+html[data-theme="dark"] :is(input,select,textarea){background:#252a2e!important;color:#f0ece6!important;border-color:#555a60!important}
+html[data-theme="dark"] :is(input,textarea)::placeholder{color:#aeb4b9!important}
+html[data-theme="dark"] :is(.status,.table-state,.preorder-status,.badge){color:inherit}
+html[data-theme="dark"] :is(h1,h2,h3,h4,h5,h6,p,span,strong,label,small,legend,td,th,dt,dd){color:inherit}
+html[data-theme="dark"] :is(.admin-header,.account-header,.auth-header,.pay-header,header){border-color:#41454a}
+html[data-theme="dark"] :is(.admin-page-section,.admin-content,.account-main,.page-content,.booking-section,.restaurant-section,.reports-section,.preorders-section,.tables-section,.dashboard-section){background:transparent!important}
+html[data-theme="dark"] :is(.modal,.modal-overlay,.overlay){color:#e8e5e0}
+html[data-theme="dark"] :is(.view-button,.nav-tab,.tab-button,.hall-tab,.zone-tab,.reset-button,.secondary-button){border-color:#5c6065}
+html[data-theme="dark"] :is(.dashboard-empty,.empty-state,.helper-text,.muted,.subtitle){color:#b7b6b3!important}
+html[data-theme="dark"] :is(.table-preferences,.table-preferences *){color:#e8e5e0}
+html[data-theme="dark"] .table-preferences button.is-selected{color:#fff}
+
+/* Overrides derived from existing light surfaces */
+html[data-theme="dark"] body{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .admin-header{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .nav-tab:hover{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-kpi{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-panel{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-progress-track{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-zone-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-rank{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-ranking-track{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .stat-card,html[data-theme="dark"] .report-kpi{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .today-section,html[data-theme="dark"] .all-section,html[data-theme="dark"] .tables-management,html[data-theme="dark"] .preorders-section,html[data-theme="dark"] .report-panel{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] thead{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .admin-table-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .highlight-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .progress-track{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .table-load-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .modal-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .modal-close{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .details-grid > div{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .preorder-note{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .preorder-kitchen-status{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-ranking-bar-track{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-upcoming-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .dashboard-preorder-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .logs-section{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .log-action{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .profile-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .reservation-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .status-completed{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .reservation-details{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .detail-item{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .payment-box{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .cancel-button{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .empty-state{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] header{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .booking{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .booking input,html[data-theme="dark"] .booking select{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .restaurant-map{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .feature-legend{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .selected-table-info div{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .summary div{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .special-option{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .my-status-row{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .my-booking-card div{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .preorder-section{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .menu-category-button{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .menu-item-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .menu-quantity{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .success-preorder-block{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .my-preorder-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .auth-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .form-group input{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .auth-note{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .pay-card{background-color:#24282c!important;color:#e8e5e0!important;}
+html[data-theme="dark"] .method:has(input:checked){background-color:#24282c!important;color:#e8e5e0!important;}
+
+html[data-theme="dark"] body{background:#151719!important;color:#e8e5e0!important}

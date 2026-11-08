@@ -2,29 +2,177 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import sqlite3
 import re
 import os
+import secrets
+import hmac
+import logging
+import smtplib
+import ssl
+from email.message import EmailMessage
+from pathlib import Path
 from datetime import datetime, timedelta
 from functools import wraps
+from contextlib import closing
 from werkzeug.security import generate_password_hash, check_password_hash
+from logging.handlers import RotatingFileHandler
+from time import perf_counter
+from flask import g, has_request_context
+from assistant_service import answer_question
+from db_integrity import install_invariants
 
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get(
-    "SECRET_KEY",
-    "local-development-secret-key"
+# Установите SECRET_KEY в окружении для стабильных сессий между перезапусками.
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "0") == "1",
+    MAX_CONTENT_LENGTH=1024 * 1024,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
 )
+if not os.environ.get("SECRET_KEY"):
+    app.logger.warning(
+        "SECRET_KEY не задан: сессии сбросятся при перезапуске. Для публикации задайте SECRET_KEY."
+    )
 
-DATABASE = "restaurant.db"
+DATABASE = str(Path(__file__).resolve().parent / "restaurant.db")
 
-ADMIN_USERNAME = os.environ.get(
-    "ADMIN_USERNAME",
-    "admin"
-)
+# Мониторинг: журнал без паролей, телефонов, email и тела запросов.
+LOG_DIR = Path(__file__).resolve().parent / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+if not any(isinstance(h, RotatingFileHandler) for h in app.logger.handlers):
+    handler = RotatingFileHandler(
+        LOG_DIR / "application.log", maxBytes=2_000_000, backupCount=5, encoding="utf-8"
+    )
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
+app.logger.setLevel(logging.INFO)
 
-ADMIN_PASSWORD = os.environ.get(
-    "ADMIN_PASSWORD",
-    "admin123"
-)
+
+@app.before_request
+def start_request_timer():
+    g.request_started = perf_counter()
+
+
+@app.after_request
+def log_request_metrics(response):
+    duration_ms = round(
+        (perf_counter() - getattr(g, "request_started", perf_counter())) * 1000, 1
+    )
+    # Не записываем query string и параметры форм (могут содержать личные данные).
+    if response.status_code >= 400 or duration_ms > 1000:
+        app.logger.warning(
+            "HTTP method=%s path=%s status=%s duration_ms=%s",
+            request.method,
+            request.path,
+            response.status_code,
+            duration_ms,
+        )
+    response.headers["X-Response-Time-Ms"] = str(duration_ms)
+    return response
+
+
+@app.errorhandler(sqlite3.IntegrityError)
+def integrity_error(error):
+    message = str(error)
+    if "reservation_conflict" in message:
+        return jsonify(
+            success=False, message="Стол уже занят на выбранный период."
+        ), 409
+    if "payment_required" in message:
+        return jsonify(
+            success=False, message="Сначала необходимо оплатить бронирование."
+        ), 409
+    app.logger.exception("Database integrity error")
+    return jsonify(success=False, message="Не удалось сохранить данные."), 400
+
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    app.logger.error("Internal error path=%s", request.path, exc_info=True)
+    if request.path.startswith("/api/"):
+        return jsonify(success=False, message="Внутренняя ошибка сервера."), 500
+    return "Внутренняя ошибка сервера. Попробуйте позже.", 500
+
+
+@app.get("/health")
+def health_check():
+    # Доступен без входа; не раскрывает содержимое БД и настройки сервера.
+    try:
+        with closing(sqlite3.connect(DATABASE, timeout=2)) as conn:
+            conn.execute("SELECT 1").fetchone()
+        return jsonify(status="ok", database="ok"), 200
+    except sqlite3.Error:
+        app.logger.error("Health check failed: database unavailable")
+        return jsonify(status="degraded", database="unavailable"), 503
+
+
+@app.post("/api/assistant")
+def assistant_reply():
+    payload = request.get_json(silent=True) or {}
+    question = payload.get("message", "")
+    if not isinstance(question, str) or not question.strip() or len(question) > 500:
+        return jsonify(
+            success=False, message="Введите вопрос длиной до 500 символов."
+        ), 400
+    try:
+        with closing(db()) as connection:
+            items = connection.execute(
+                "SELECT name, category, price FROM menu_items WHERE is_active = 1 ORDER BY id LIMIT 80"
+            ).fetchall()
+        result = answer_question(question, [dict(row) for row in items])
+        return jsonify(success=True, answer=result["answer"], mode=result["mode"])
+    except Exception:
+        app.logger.exception("Assistant request failed")
+        return jsonify(success=False, message="Помощник временно недоступен."), 503
+
+
+@app.post("/api/assistant/book")
+def assistant_book():
+    """Assistant uses the same validation and booking logic as the public form."""
+    data = request.get_json(silent=True) or {}
+    try:
+        guests = int(data.get("guests", 0))
+    except (ValueError, TypeError):
+        return jsonify(success=False, message="Укажите количество гостей."), 400
+    if guests < 1 or guests > 6:
+        return jsonify(
+            success=False, message="Можно забронировать стол на 1–6 гостей."
+        ), 400
+    date, time = (
+        str(data.get("reservation_date", "")),
+        str(data.get("reservation_time", "")),
+    )
+    try:
+        if datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M") <= datetime.now():
+            raise ValueError()
+    except ValueError:
+        return jsonify(success=False, message="Укажите будущую дату и время."), 400
+    # Prefer the smallest fitting table to avoid unnecessary deposit.
+    for table, capacity in sorted(TABLES.items(), key=lambda x: (x[1], x[0])):
+        if (
+            capacity >= guests
+            and table_is_active(table)
+            and not busy(table, date, time)
+        ):
+            data["table_number"] = table
+            data["preorder"] = []
+            return create_reservation(data)
+    return jsonify(
+        success=False,
+        message="На это время свободных столов нет. Выберите другое время.",
+    ), 409
+
+
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD") or secrets.token_urlsafe(32)
+if not os.environ.get("ADMIN_PASSWORD"):
+    app.logger.warning(
+        "ADMIN_PASSWORD не задан: задайте его в окружении для входа администратора."
+    )
 
 
 # =========================================================
@@ -45,7 +193,6 @@ TABLES = {
     8: 2,
     9: 4,
     10: 4,
-
     # =========================
     # ТЕРРАСА — 6 столов
     # =========================
@@ -54,43 +201,158 @@ TABLES = {
     13: 4,
     14: 4,
     15: 2,
-    16: 6
+    16: 6,
 }
 
 BOOKING_DURATION_HOURS = 2
 
 
 # Все допустимые статусы бронирования
-ALLOWED_STATUSES = {
-    "confirmed",
-    "arrived",
-    "completed",
-    "cancelled"
-}
+ALLOWED_STATUSES = {"confirmed", "arrived", "completed", "cancelled"}
 
 
 # Только эти статусы блокируют стол
-ACTIVE_STATUSES = {
-    "confirmed",
-    "arrived"
-}
+ACTIVE_STATUSES = {"confirmed", "arrived"}
 
 
-ALLOWED_PREORDER_STATUSES = {
-    "new",
-    "preparing",
-    "ready"
-}
+ALLOWED_PREORDER_STATUSES = {"new", "preparing", "ready"}
+
+
+# =========================================================
+# CSRF, ЗАЩИТА СЕССИЙ И УВЕДОМЛЕНИЯ
+# =========================================================
+
+# Автоматический бэкап один раз в сутки при первом запросе к работающему сайту.
+# Не заменяет внешний планировщик: при выключенном сервере запусков не будет.
+_last_backup_date = None
+
+
+def automatic_daily_backup():
+    global _last_backup_date
+    today = datetime.now().strftime("%Y%m%d")
+    if _last_backup_date == today:
+        return
+    source = Path(DATABASE)
+    if not source.exists():
+        return
+    folder = source.parent / "backups"
+    target = folder / f"restaurant_auto_{today}.db"
+    try:
+        folder.mkdir(exist_ok=True)
+        if not target.exists():
+            with (
+                closing(sqlite3.connect(DATABASE)) as current,
+                closing(sqlite3.connect(target)) as backup_db,
+            ):
+                current.backup(backup_db)
+        _last_backup_date = today
+    except Exception:
+        app.logger.exception("Автоматический бэкап не создан")
+
+
+@app.before_request
+def protect_mutations():
+    automatic_daily_backup()
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_urlsafe(32)
+    session.permanent = True
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        token = request.headers.get("X-CSRF-Token") or request.form.get(
+            "csrf_token", ""
+        )
+        if not hmac.compare_digest(str(token), session["_csrf_token"]):
+            if request.path.startswith("/api/"):
+                return jsonify(
+                    success=False,
+                    message="Сессия устарела. Обновите страницу и повторите действие.",
+                ), 403
+            return "Неверный CSRF-токен. Обновите страницу.", 403
+
+
+@app.context_processor
+def security_context():
+    return {"csrf_token": lambda: session.get("_csrf_token", "")}
+
+
+@app.after_request
+def security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; img-src 'self' data:; font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
+    return response
+
+
+def send_booking_email(recipient, subject, body):
+    """Отправка только при настройке SMTP; сбой почты не ломает бронирование."""
+    host = os.environ.get("SMTP_HOST")
+    sender = os.environ.get("SMTP_FROM")
+    if not host or not sender or not recipient:
+        return False
+    try:
+        message = EmailMessage()
+        message["From"] = sender
+        message["To"] = recipient
+        message["Subject"] = subject
+        message.set_content(body)
+        port = int(os.environ.get("SMTP_PORT", "587"))
+        if os.environ.get("SMTP_SSL", "0") == "1":
+            server = smtplib.SMTP_SSL(
+                host, port, timeout=8, context=ssl.create_default_context()
+            )
+        else:
+            server = smtplib.SMTP(host, port, timeout=8)
+        with server:
+            if os.environ.get("SMTP_SSL", "0") != "1":
+                server.starttls(context=ssl.create_default_context())
+            if os.environ.get("SMTP_USER"):
+                server.login(
+                    os.environ["SMTP_USER"], os.environ.get("SMTP_PASSWORD", "")
+                )
+            server.send_message(message)
+        return True
+    except Exception:
+        app.logger.exception("Не удалось отправить email")
+        return False
+
+
+def email_for_user(connection, user_id):
+    if not user_id:
+        return None
+    row = connection.execute(
+        "SELECT email FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+    return row["email"] if row else None
 
 
 # =========================================================
 # БАЗА ДАННЫХ
 # =========================================================
 
+
+def reset_auth_session():
+    """Rotate the CSRF token when authentication state changes."""
+    session.clear()
+    session["_csrf_token"] = secrets.token_urlsafe(32)
+
+
 def db():
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(DATABASE, timeout=15)
     connection.row_factory = sqlite3.Row
+    if has_request_context():
+        g.setdefault("database_connections", []).append(connection)
     return connection
+
+
+@app.teardown_request
+def close_request_connections(error=None):
+    for connection in g.pop("database_connections", []):
+        connection.close()
 
 
 def init_db():
@@ -147,7 +409,7 @@ def init_db():
             ON CONFLICT(table_number)
             DO UPDATE SET capacity = excluded.capacity
             """,
-            (table_number, capacity)
+            (table_number, capacity),
         )
 
     connection.execute(
@@ -183,46 +445,137 @@ def init_db():
 
     if menu_count == 0:
         default_menu = [
-            ("Тартар из говядины", "Говяжья вырезка, каперсы, корнишоны, дижонская горчица и хрустящий багет", "Закуски", 4200),
-            ("Брускетта с ростбифом", "Чиабатта, ростбиф, сливочный крем, руккола и вяленые томаты", "Закуски", 3600),
-            ("Креветки в чесночном масле", "Тигровые креветки, чеснок, сливочное масло и свежая зелень", "Закуски", 4900),
-            ("Салат с ростбифом", "Ростбиф, микс салатов, томаты черри, пармезан и горчичная заправка", "Салаты", 3900),
-            ("Цезарь с курицей", "Куриное филе, романо, пармезан, томаты черри и соус Цезарь", "Салаты", 3400),
-            ("Салат с лососем", "Слабосолёный лосось, авокадо, микс салатов и цитрусовая заправка", "Салаты", 4400),
-            ("Крем-суп из шампиньонов", "Шампиньоны, сливки, трюфельное масло и хрустящий багет", "Супы", 2900),
-            ("Тыквенный крем-суп", "Запечённая тыква, сливки, тыквенные семечки и ароматное масло", "Супы", 2700),
-            ("Томлёные говяжьи щёчки", "Говяжьи щёчки длительного томления, картофельное пюре и насыщенный мясной соус", "Горячие блюда", 5900),
-            ("Медальоны из телятины", "Телячья вырезка, картофель гратен и сливочно-грибной соус", "Горячие блюда", 6900),
-            ("Лосось со сливочным соусом", "Филе лосося, овощи гриль и сливочно-лимонный соус", "Горячие блюда", 6500),
-            ("Утиная грудка", "Утиная грудка, ягодный соус и картофельное пюре", "Горячие блюда", 6200),
-            ("Куриное филе с грибным соусом", "Куриное филе, картофельное пюре и сливочный соус с шампиньонами", "Горячие блюда", 4500),
-            ("Паста с креветками", "Феттучини, тигровые креветки, сливочный соус и пармезан", "Паста", 4900),
-            ("Феттучини с грибами", "Паста, шампиньоны, сливочный соус и пармезан", "Паста", 3900),
+            (
+                "Тартар из говядины",
+                "Говяжья вырезка, каперсы, корнишоны, дижонская горчица и хрустящий багет",
+                "Закуски",
+                4200,
+            ),
+            (
+                "Брускетта с ростбифом",
+                "Чиабатта, ростбиф, сливочный крем, руккола и вяленые томаты",
+                "Закуски",
+                3600,
+            ),
+            (
+                "Креветки в чесночном масле",
+                "Тигровые креветки, чеснок, сливочное масло и свежая зелень",
+                "Закуски",
+                4900,
+            ),
+            (
+                "Салат с ростбифом",
+                "Ростбиф, микс салатов, томаты черри, пармезан и горчичная заправка",
+                "Салаты",
+                3900,
+            ),
+            (
+                "Цезарь с курицей",
+                "Куриное филе, романо, пармезан, томаты черри и соус Цезарь",
+                "Салаты",
+                3400,
+            ),
+            (
+                "Салат с лососем",
+                "Слабосолёный лосось, авокадо, микс салатов и цитрусовая заправка",
+                "Салаты",
+                4400,
+            ),
+            (
+                "Крем-суп из шампиньонов",
+                "Шампиньоны, сливки, трюфельное масло и хрустящий багет",
+                "Супы",
+                2900,
+            ),
+            (
+                "Тыквенный крем-суп",
+                "Запечённая тыква, сливки, тыквенные семечки и ароматное масло",
+                "Супы",
+                2700,
+            ),
+            (
+                "Томлёные говяжьи щёчки",
+                "Говяжьи щёчки длительного томления, картофельное пюре и насыщенный мясной соус",
+                "Горячие блюда",
+                5900,
+            ),
+            (
+                "Медальоны из телятины",
+                "Телячья вырезка, картофель гратен и сливочно-грибной соус",
+                "Горячие блюда",
+                6900,
+            ),
+            (
+                "Лосось со сливочным соусом",
+                "Филе лосося, овощи гриль и сливочно-лимонный соус",
+                "Горячие блюда",
+                6500,
+            ),
+            (
+                "Утиная грудка",
+                "Утиная грудка, ягодный соус и картофельное пюре",
+                "Горячие блюда",
+                6200,
+            ),
+            (
+                "Куриное филе с грибным соусом",
+                "Куриное филе, картофельное пюре и сливочный соус с шампиньонами",
+                "Горячие блюда",
+                4500,
+            ),
+            (
+                "Паста с креветками",
+                "Феттучини, тигровые креветки, сливочный соус и пармезан",
+                "Паста",
+                4900,
+            ),
+            (
+                "Феттучини с грибами",
+                "Паста, шампиньоны, сливочный соус и пармезан",
+                "Паста",
+                3900,
+            ),
             ("Карбонара", "Спагетти, бекон, желток и пармезан", "Паста", 4200),
-            ("Тирамису", "Классический итальянский десерт с маскарпоне и кофе", "Десерты", 2600),
-            ("Баскский чизкейк", "Нежный запечённый чизкейк с карамелизированной корочкой", "Десерты", 2800),
-            ("Шоколадный фондан", "Тёплый шоколадный десерт с жидким центром и мороженым", "Десерты", 2900),
-            ("Домашний лимонад", "Лимон, лайм, мята и газированная вода", "Напитки", 1800),
+            (
+                "Тирамису",
+                "Классический итальянский десерт с маскарпоне и кофе",
+                "Десерты",
+                2600,
+            ),
+            (
+                "Баскский чизкейк",
+                "Нежный запечённый чизкейк с карамелизированной корочкой",
+                "Десерты",
+                2800,
+            ),
+            (
+                "Шоколадный фондан",
+                "Тёплый шоколадный десерт с жидким центром и мороженым",
+                "Десерты",
+                2900,
+            ),
+            (
+                "Домашний лимонад",
+                "Лимон, лайм, мята и газированная вода",
+                "Напитки",
+                1800,
+            ),
             ("Апельсиновый фреш", "Свежевыжатый апельсиновый сок", "Напитки", 2200),
             ("Американо", "Классический чёрный кофе", "Напитки", 1200),
-            ("Капучино", "Эспрессо и взбитое молоко", "Напитки", 1600)
+            ("Капучино", "Эспрессо и взбитое молоко", "Напитки", 1600),
         ]
         connection.executemany(
             "INSERT INTO menu_items (name, description, category, price, is_active) VALUES (?, ?, ?, ?, 1)",
-            default_menu
+            default_menu,
         )
 
     columns = {
         row["name"]
-        for row in connection.execute(
-            "PRAGMA table_info(reservations)"
-        ).fetchall()
+        for row in connection.execute("PRAGMA table_info(reservations)").fetchall()
     }
 
     if "user_id" not in columns:
-        connection.execute(
-            "ALTER TABLE reservations ADD COLUMN user_id INTEGER"
-        )
+        connection.execute("ALTER TABLE reservations ADD COLUMN user_id INTEGER")
 
     if "payment_status" not in columns:
         connection.execute(
@@ -230,29 +583,22 @@ def init_db():
         )
 
     if "payment_method" not in columns:
-        connection.execute(
-            "ALTER TABLE reservations ADD COLUMN payment_method TEXT"
-        )
+        connection.execute("ALTER TABLE reservations ADD COLUMN payment_method TEXT")
 
     if "paid_at" not in columns:
-        connection.execute(
-            "ALTER TABLE reservations ADD COLUMN paid_at TEXT"
-        )
+        connection.execute("ALTER TABLE reservations ADD COLUMN paid_at TEXT")
 
     if "special_requests" not in columns:
-        connection.execute(
-            "ALTER TABLE reservations ADD COLUMN special_requests TEXT"
-        )
+        connection.execute("ALTER TABLE reservations ADD COLUMN special_requests TEXT")
 
     if "comment" not in columns:
-        connection.execute(
-            "ALTER TABLE reservations ADD COLUMN comment TEXT"
-        )
+        connection.execute("ALTER TABLE reservations ADD COLUMN comment TEXT")
+
+    if "payment_deadline" not in columns:
+        connection.execute("ALTER TABLE reservations ADD COLUMN payment_deadline TEXT")
 
     if "preorder_status" not in columns:
-        connection.execute(
-            "ALTER TABLE reservations ADD COLUMN preorder_status TEXT"
-        )
+        connection.execute("ALTER TABLE reservations ADD COLUMN preorder_status TEXT")
 
     connection.execute(
         """
@@ -279,6 +625,11 @@ def init_db():
         """
     )
 
+    connection.execute("""CREATE TABLE IF NOT EXISTS email_reminders (
+        reservation_id INTEGER PRIMARY KEY,
+        sent_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )""")
+    install_invariants(connection)
     connection.commit()
     connection.close()
 
@@ -287,6 +638,7 @@ def init_db():
 # АККАУНТ ПОСЕТИТЕЛЯ
 # =========================================================
 
+
 def user_required(function):
 
     @wraps(function)
@@ -294,7 +646,14 @@ def user_required(function):
 
         if not session.get("user_id"):
             return redirect(url_for("user_login"))
-
+        connection = db()
+        exists = connection.execute(
+            "SELECT 1 FROM users WHERE id = ?", (session["user_id"],)
+        ).fetchone()
+        connection.close()
+        if not exists:
+            reset_auth_session()
+            return redirect(url_for("user_login"))
         return function(*args, **kwargs)
 
     return wrapper
@@ -321,15 +680,14 @@ def register():
             error = "Введите корректный номер телефона."
         elif not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
             error = "Введите корректный email."
-        elif len(password) < 6:
-            error = "Пароль должен содержать минимум 6 символов."
+        elif len(password) < 8:
+            error = "Пароль должен содержать минимум 8 символов."
         elif password != password2:
             error = "Пароли не совпадают."
         else:
             connection = db()
             existing = connection.execute(
-                "SELECT id FROM users WHERE email = ?",
-                (email,)
+                "SELECT id FROM users WHERE email = ?", (email,)
             ).fetchone()
 
             if existing:
@@ -341,12 +699,13 @@ def register():
                     INSERT INTO users (name, phone, email, password_hash)
                     VALUES (?, ?, ?, ?)
                     """,
-                    (name, phone, email, generate_password_hash(password))
+                    (name, phone, email, generate_password_hash(password)),
                 )
                 user_id = cursor.lastrowid
                 connection.commit()
                 connection.close()
 
+                reset_auth_session()
                 session["user_id"] = user_id
                 session["user_name"] = name
                 session["user_email"] = email
@@ -370,14 +729,14 @@ def user_login():
 
         connection = db()
         user = connection.execute(
-            "SELECT * FROM users WHERE email = ?",
-            (email,)
+            "SELECT * FROM users WHERE email = ?", (email,)
         ).fetchone()
         connection.close()
 
         if not user or not check_password_hash(user["password_hash"], password):
             error = "Неверный email или пароль."
         else:
+            reset_auth_session()
             session["user_id"] = user["id"]
             session["user_name"] = user["name"]
             session["user_email"] = user["email"]
@@ -398,10 +757,10 @@ def user_logout():
 @user_required
 def account():
 
+    expire_unpaid_bookings()
     connection = db()
     user = connection.execute(
-        "SELECT id, name, phone, email FROM users WHERE id = ?",
-        (session["user_id"],)
+        "SELECT id, name, phone, email FROM users WHERE id = ?", (session["user_id"],)
     ).fetchone()
 
     reservation_rows = connection.execute(
@@ -409,30 +768,50 @@ def account():
         SELECT id, table_number, customer_name, phone, guests,
                reservation_date, reservation_time, status,
                payment_status, payment_method, paid_at,
-               special_requests, comment, preorder_status
+               special_requests, comment, preorder_status, payment_deadline
         FROM reservations
         WHERE user_id = ?
         ORDER BY reservation_date DESC, reservation_time DESC, id DESC
         """,
-        (session["user_id"],)
+        (session["user_id"],),
     ).fetchall()
 
     reservations = []
     for row in reservation_rows:
         reservation = dict(row)
-        preorder_items, preorder_total = get_reservation_preorder(connection, reservation["id"])
+        preorder_items, preorder_total = get_reservation_preorder(
+            connection, reservation["id"]
+        )
         reservation["preorder_items"] = preorder_items
         reservation["preorder_total"] = preorder_total
+        reservation["deposit_required"] = requires_deposit(
+            reservation["guests"], reservation["table_number"], bool(preorder_items)
+        )
         reservations.append(reservation)
 
     connection.close()
 
     return render_template(
-        "account.html",
-        user=user,
-        reservations=reservations,
-        now=datetime.now()
+        "account.html", user=user, reservations=reservations, now=datetime.now()
     )
+
+
+@app.route("/account/profile", methods=["POST"])
+@user_required
+def update_profile():
+    name = request.form.get("name", "").strip()
+    phone = request.form.get("phone", "").strip()
+    if not 2 <= len(name) <= 50 or not valid_phone(phone):
+        return redirect(url_for("account", profile_error="1"))
+    connection = db()
+    connection.execute(
+        "UPDATE users SET name = ?, phone = ? WHERE id = ?",
+        (name, phone, session["user_id"]),
+    )
+    connection.commit()
+    connection.close()
+    session["user_name"] = name
+    return redirect(url_for("account", profile_saved="1"))
 
 
 @app.route("/account/reservations/<int:rid>/cancel", methods=["POST"])
@@ -442,25 +821,25 @@ def account_cancel_reservation(rid):
     connection = db()
     reservation = connection.execute(
         """
-        SELECT id, reservation_date, reservation_time, status
+        SELECT id, reservation_date, reservation_time, status, user_id
         FROM reservations
         WHERE id = ? AND user_id = ?
         """,
-        (rid, session["user_id"])
+        (rid, session["user_id"]),
     ).fetchone()
 
     if not reservation:
         connection.close()
         return redirect(url_for("account"))
 
-    if reservation["status"] != "confirmed":
+    if reservation["status"] not in {"confirmed", "pending_payment"}:
         connection.close()
         return redirect(url_for("account"))
 
     try:
         reservation_datetime = datetime.strptime(
             f"{reservation['reservation_date']} {reservation['reservation_time']}",
-            "%Y-%m-%d %H:%M"
+            "%Y-%m-%d %H:%M",
         )
     except ValueError:
         connection.close()
@@ -480,11 +859,16 @@ def account_cancel_reservation(rid):
             END
         WHERE id = ?
         """,
-        (rid,)
+        (rid,),
     )
+    recipient = email_for_user(connection, session["user_id"])
     connection.commit()
     connection.close()
-
+    send_booking_email(
+        recipient,
+        "Отмена бронирования TABLE",
+        f"Бронирование №{rid} отменено. Если депозит был оплачен, в демонстрационной системе отмечен возврат.",
+    )
     return redirect(url_for("account"))
 
 
@@ -492,23 +876,36 @@ def account_cancel_reservation(rid):
 # DEMO-ОПЛАТА БРОНИРОВАНИЯ
 # =========================================================
 
+
 @app.route("/payment/<int:rid>", methods=["GET", "POST"])
-@user_required
 def payment(rid):
     connection = db()
     reservation = connection.execute(
         """
         SELECT id, table_number, guests, reservation_date, reservation_time,
-               status, payment_status, payment_method, paid_at
+               status, payment_status, payment_method, paid_at,
+               customer_name, user_id, payment_deadline
         FROM reservations
-        WHERE id = ? AND user_id = ?
+        WHERE id = ?
         """,
-        (rid, session["user_id"])
+        (rid,),
     ).fetchone()
 
-    if not reservation:
+    if not can_view_payment(reservation):
         connection.close()
-        return redirect(url_for("account"))
+        return redirect(url_for("home"))
+
+    expire_unpaid_bookings()
+    reservation = connection.execute(
+        "SELECT * FROM reservations WHERE id=?", (rid,)
+    ).fetchone()
+    preorder_items, preorder_total = get_reservation_preorder(connection, rid)
+    deposit_required = requires_deposit(
+        reservation["guests"], reservation["table_number"], bool(preorder_items)
+    )
+    if not deposit_required:
+        connection.close()
+        return redirect(url_for("home"))
 
     error = None
     amount = 5000
@@ -523,23 +920,40 @@ def payment(rid):
             error = "Завершённое бронирование нельзя оплатить."
         elif reservation["payment_status"] == "paid":
             connection.close()
-            return redirect(url_for("account"))
+            return redirect(url_for("payment_success", rid=rid))
+        elif reservation["status"] != "pending_payment":
+            error = "Эта бронь не ожидает предоплату."
         elif method not in allowed_methods:
             error = "Выберите способ оплаты."
+        elif method == "card" and request.form.get("demo_card_confirmed") != "yes":
+            error = "Для демонстрации используйте только тестовую карту 4242 4242 4242 4242."
+        elif method == "kaspi" and request.form.get("demo_qr_confirmed") != "yes":
+            error = "Подтвердите ознакомление с демонстрационным QR."
+        elif (
+            method == "apple_pay" and request.form.get("demo_wallet_confirmed") != "yes"
+        ):
+            error = "Подтвердите демонстрационную оплату."
         else:
             paid_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             connection.execute(
                 """
                 UPDATE reservations
-                SET payment_status = 'paid',
-                    payment_method = ?,
+                SET payment_status = 'paid', status = 'confirmed',
+                    payment_deadline = NULL, payment_method = ?,
                     paid_at = ?
-                WHERE id = ? AND user_id = ?
+                WHERE id = ? AND status = 'pending_payment'
                 """,
-                (method, paid_at, rid, session["user_id"])
+                (method, paid_at, rid),
             )
             connection.commit()
+            recipient = email_for_user(connection, reservation["user_id"])
             connection.close()
+            send_booking_email(
+                recipient,
+                "Бронирование TABLE подтверждено",
+                f"Бронь №{rid}: стол №{reservation['table_number']}, "
+                f"{reservation['reservation_date']} в {reservation['reservation_time']}.",
+            )
             return redirect(url_for("payment_success", rid=rid))
 
     connection.close()
@@ -547,32 +961,38 @@ def payment(rid):
         "payment.html",
         reservation=reservation,
         amount=amount,
-        error=error
+        error=error,
+        preorder_total=preorder_total,
+        table_capacity=TABLES[reservation["table_number"]],
     )
 
 
 @app.route("/payment/<int:rid>/success")
-@user_required
 def payment_success(rid):
     connection = db()
     reservation = connection.execute(
         """
-        SELECT id, table_number, reservation_date, reservation_time,
-               payment_status, payment_method, paid_at
+        SELECT id, table_number, guests, customer_name, reservation_date, reservation_time,
+               payment_status, payment_method, paid_at, status, user_id
         FROM reservations
-        WHERE id = ? AND user_id = ?
+        WHERE id = ?
         """,
-        (rid, session["user_id"])
+        (rid,),
     ).fetchone()
+    preorder_items, preorder_total = (
+        get_reservation_preorder(connection, rid) if reservation else ([], 0)
+    )
     connection.close()
 
-    if not reservation or reservation["payment_status"] != "paid":
-        return redirect(url_for("account"))
+    if not can_view_payment(reservation) or reservation["payment_status"] != "paid":
+        return redirect(url_for("home"))
 
     return render_template(
         "payment_success.html",
         reservation=reservation,
-        amount=5000
+        amount=5000,
+        preorder_items=preorder_items,
+        preorder_total=preorder_total,
     )
 
 
@@ -580,15 +1000,14 @@ def payment_success(rid):
 # ЗАЩИТА АДМИН-ПАНЕЛИ
 # =========================================================
 
+
 def admin_required(function):
 
     @wraps(function)
     def wrapper(*args, **kwargs):
 
         if not session.get("admin_logged_in"):
-            return redirect(
-                url_for("admin_login")
-            )
+            return redirect(url_for("admin_login"))
 
         return function(*args, **kwargs)
 
@@ -601,11 +1020,7 @@ def admin_api_required(function):
     def wrapper(*args, **kwargs):
 
         if not session.get("admin_logged_in"):
-
-            return jsonify(
-                success=False,
-                message="Необходим вход администратора."
-            ), 401
+            return jsonify(success=False, message="Необходим вход администратора."), 401
 
         return function(*args, **kwargs)
 
@@ -616,31 +1031,32 @@ def admin_api_required(function):
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # =========================================================
 
+
 def valid_phone(phone):
 
-    digits = re.sub(
-        r"\D",
-        "",
-        phone
-    )
+    digits = re.sub(r"\D", "", phone)
 
     return 10 <= len(digits) <= 12
 
 
 def normalize_phone(phone):
 
-    return re.sub(
-        r"\D",
-        "",
-        str(phone)
-    )
+    return re.sub(r"\D", "", str(phone))
 
 
 def normalize_name(name):
     return " ".join(str(name).strip().casefold().split())
 
 
-def add_admin_log(connection, action_type, entity_type, entity_id, description, old_value=None, new_value=None):
+def add_admin_log(
+    connection,
+    action_type,
+    entity_type,
+    entity_id,
+    description,
+    old_value=None,
+    new_value=None,
+):
     connection.execute(
         """
         INSERT INTO admin_logs (
@@ -656,55 +1072,72 @@ def add_admin_log(connection, action_type, entity_type, entity_id, description, 
             entity_id,
             description,
             None if old_value is None else str(old_value),
-            None if new_value is None else str(new_value)
-        )
+            None if new_value is None else str(new_value),
+        ),
     )
 
 
 def overlap(time_a, time_b):
 
-    first = datetime.strptime(
-        time_a,
-        "%H:%M"
-    )
+    first = datetime.strptime(time_a, "%H:%M")
 
-    second = datetime.strptime(
-        time_b,
-        "%H:%M"
-    )
+    second = datetime.strptime(time_b, "%H:%M")
 
-    first_end = first + timedelta(
-        hours=BOOKING_DURATION_HOURS
-    )
+    first_end = first + timedelta(hours=BOOKING_DURATION_HOURS)
 
-    second_end = second + timedelta(
-        hours=BOOKING_DURATION_HOURS
-    )
+    second_end = second + timedelta(hours=BOOKING_DURATION_HOURS)
 
-    return (
-        second < first_end
-        and
-        first < second_end
-    )
+    return second < first_end and first < second_end
 
 
 def table_is_active(table_number):
     connection = db()
     row = connection.execute(
-        "SELECT is_active FROM table_settings WHERE table_number = ?",
-        (table_number,)
+        "SELECT is_active FROM table_settings WHERE table_number = ?", (table_number,)
     ).fetchone()
     connection.close()
     return bool(row["is_active"]) if row is not None else table_number in TABLES
 
 
-def busy(
-    table_number,
-    reservation_date,
-    reservation_time,
-    exclude=None
-):
+def expire_unpaid_bookings():
+    """Release unpaid provisional bookings after 15 minutes."""
+    with closing(db()) as conn:
+        now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if not conn.execute(
+            "SELECT 1 FROM reservations WHERE status='pending_payment' AND payment_deadline < ? LIMIT 1",
+            (now_text,),
+        ).fetchone():
+            return
+        conn.execute(
+            """UPDATE reservations SET status='cancelled'
+                        WHERE status='pending_payment' AND payment_deadline IS NOT NULL
+                        AND payment_deadline < ?""",
+            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),),
+        )
+        conn.commit()
 
+
+def requires_deposit(guests, table_number, has_preorder=False):
+    capacity = TABLES.get(table_number, 0)
+    return (
+        guests > 4
+        or bool(has_preorder)
+        or (guests == 4 and capacity == 6)
+        or (guests in (1, 2) and capacity > 2)
+    )
+
+
+def can_view_payment(reservation):
+    return reservation is not None and (
+        reservation["user_id"] == session.get("user_id")
+        and session.get("user_id") is not None
+        or reservation["id"] in session.get("guest_payment_ids", [])
+    )
+
+
+def busy(table_number, reservation_date, reservation_time, exclude=None):
+
+    expire_unpaid_bookings()
     connection = db()
 
     sql = """
@@ -714,109 +1147,71 @@ def busy(
         FROM reservations
         WHERE table_number = ?
         AND reservation_date = ?
-        AND status IN ('confirmed', 'arrived')
+        AND status IN ('confirmed', 'arrived', 'pending_payment')
     """
 
-    params = [
-        table_number,
-        reservation_date
-    ]
+    params = [table_number, reservation_date]
 
     if exclude is not None:
-
         sql += " AND id != ?"
         params.append(exclude)
 
-    rows = connection.execute(
-        sql,
-        params
-    ).fetchall()
+    rows = connection.execute(sql, params).fetchall()
 
     connection.close()
 
-    return any(
-        overlap(
-            row["reservation_time"],
-            reservation_time
-        )
-        for row in rows
-    )
+    return any(overlap(row["reservation_time"], reservation_time) for row in rows)
 
 
 # =========================================================
 # ГЛАВНАЯ СТРАНИЦА
 # =========================================================
 
+
 @app.route("/")
 def home():
 
-    return render_template(
-        "index.html"
-    )
+    return render_template("index.html")
 
 
 # =========================================================
 # ВХОД АДМИНИСТРАТОРА
 # =========================================================
 
-@app.route(
-    "/admin/login",
-    methods=["GET", "POST"]
-)
+
+@app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
 
     if session.get("admin_logged_in"):
-
-        return redirect(
-            url_for("admin")
-        )
+        return redirect(url_for("admin"))
 
     error = None
 
     if request.method == "POST":
+        username = request.form.get("username", "").strip()
 
-        username = request.form.get(
-            "username",
-            ""
-        ).strip()
+        password = request.form.get("password", "")
 
-        password = request.form.get(
-            "password",
-            ""
-        )
-
-        if (
-            username == ADMIN_USERNAME
-            and
-            password == ADMIN_PASSWORD
-        ):
-
-            session.clear()
+        if username == ADMIN_USERNAME and hmac.compare_digest(password, ADMIN_PASSWORD):
+            reset_auth_session()
 
             session["admin_logged_in"] = True
 
             session["admin_username"] = ADMIN_USERNAME
 
-            return redirect(
-                url_for("admin")
-            )
+            return redirect(url_for("admin"))
 
         error = "Неверный логин или пароль."
 
-    return render_template(
-        "login.html",
-        error=error
-    )
+    return render_template("login.html", error=error)
 
 
 @app.route("/admin/logout")
 def admin_logout():
 
-    session.clear()
+    reset_auth_session()
 
-    return redirect(
-        url_for("admin_login")
-    )
+    return redirect(url_for("admin_login"))
 
 
 @app.route("/admin")
@@ -824,11 +1219,7 @@ def admin_logout():
 def admin():
 
     return render_template(
-        "admin.html",
-        admin_username=session.get(
-            "admin_username",
-            "admin"
-        )
+        "admin.html", admin_username=session.get("admin_username", "admin")
     )
 
 
@@ -836,77 +1227,64 @@ def admin():
 # ПРОВЕРКА ДОСТУПНОСТИ СТОЛОВ
 # =========================================================
 
+
 @app.route("/api/availability")
 def availability():
 
-    date = request.args.get(
-        "date",
-        ""
-    )
+    date = request.args.get("date", "")
 
-    time = request.args.get(
-        "time",
-        ""
-    )
+    time = request.args.get("time", "")
 
-    guests = request.args.get(
-        "guests",
-        type=int
-    )
+    guests = request.args.get("guests", type=int)
 
     if not date or not time or not guests:
-
         return jsonify(
-            success=False,
-            message="Выберите дату, время и количество гостей."
+            success=False, message="Выберите дату, время и количество гостей."
         ), 400
 
     try:
-
-        reservation_datetime = datetime.strptime(
-            f"{date} {time}",
-            "%Y-%m-%d %H:%M"
-        )
+        reservation_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
 
     except ValueError:
-
-        return jsonify(
-            success=False,
-            message="Некорректная дата или время."
-        ), 400
+        return jsonify(success=False, message="Некорректная дата или время."), 400
 
     if reservation_datetime < datetime.now():
-
-        return jsonify(
-            success=False,
-            message="Нельзя выбрать прошедшее время."
-        ), 400
+        return jsonify(success=False, message="Нельзя выбрать прошедшее время."), 400
 
     unsuitable_tables = [
-        table_number
-        for table_number, capacity in TABLES.items()
-        if capacity < guests
+        table_number for table_number, capacity in TABLES.items() if capacity < guests
     ]
 
-    disabled_tables = [
-        table_number for table_number in TABLES
-        if not table_is_active(table_number)
-    ]
-
+    expire_unpaid_bookings()
+    with closing(db()) as connection:
+        disabled_tables = [
+            row["table_number"]
+            for row in connection.execute(
+                "SELECT table_number FROM table_settings WHERE is_active = 0"
+            )
+        ]
+        occupied = {
+            row["table_number"]
+            for row in connection.execute(
+                """SELECT table_number FROM reservations
+               WHERE status IN ('confirmed','arrived','pending_payment')
+               AND julianday(reservation_date || ' ' || reservation_time)
+                   < julianday(?, '+2 hours')
+               AND julianday(?) < julianday(reservation_date || ' ' || reservation_time, '+2 hours')""",
+                (f"{date} {time}", f"{date} {time}"),
+            )
+        }
     busy_tables = [
-        table_number
-        for table_number, capacity in TABLES.items()
-        if capacity >= guests and (
-            table_number in disabled_tables
-            or busy(table_number, date, time)
-        )
+        number
+        for number, capacity in TABLES.items()
+        if capacity >= guests and (number in disabled_tables or number in occupied)
     ]
 
     return jsonify(
         success=True,
         busy_tables=busy_tables,
         unsuitable_tables=unsuitable_tables,
-        disabled_tables=disabled_tables
+        disabled_tables=disabled_tables,
     )
 
 
@@ -914,36 +1292,27 @@ def availability():
 # СОЗДАНИЕ НОВОЙ БРОНИ
 # =========================================================
 
-@app.route(
-    "/api/reservations",
-    methods=["POST"]
-)
-def create_reservation():
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+@app.route("/api/reservations", methods=["POST"])
+def create_reservation(data=None):
 
-    name = str(
-        data.get(
-            "customer_name",
-            ""
-        )
-    ).strip()
+    if data is None:
+        data = request.get_json(silent=True) or {}
 
-    phone = str(
-        data.get(
-            "phone",
-            ""
-        )
-    ).strip()
+    name = str(data.get("customer_name", "")).strip()
+
+    phone = str(data.get("phone", "")).strip()
 
     raw_special_requests = data.get("special_requests", [])
     if not isinstance(raw_special_requests, list):
         raw_special_requests = []
 
     allowed_special_requests = {
-        "window", "child_chair", "birthday", "quiet", "accessible"
+        "window",
+        "child_chair",
+        "birthday",
+        "quiet",
+        "accessible",
     }
     special_requests = [
         str(item).strip()
@@ -970,104 +1339,55 @@ def create_reservation():
         except (TypeError, ValueError):
             return jsonify(success=False, message="Некорректный предзаказ блюд."), 400
         if quantity < 1 or quantity > 20:
-            return jsonify(success=False, message="Количество одного блюда должно быть от 1 до 20."), 400
-        preorder_quantities[menu_item_id] = preorder_quantities.get(menu_item_id, 0) + quantity
-
-    date = str(
-        data.get(
-            "reservation_date",
-            ""
+            return jsonify(
+                success=False, message="Количество одного блюда должно быть от 1 до 20."
+            ), 400
+        preorder_quantities[menu_item_id] = (
+            preorder_quantities.get(menu_item_id, 0) + quantity
         )
-    ).strip()
 
-    time = str(
-        data.get(
-            "reservation_time",
-            ""
-        )
-    ).strip()
+    date = str(data.get("reservation_date", "")).strip()
+
+    time = str(data.get("reservation_time", "")).strip()
 
     try:
+        table = int(data.get("table_number"))
 
-        table = int(
-            data.get(
-                "table_number"
-            )
-        )
-
-        guests = int(
-            data.get(
-                "guests"
-            )
-        )
+        guests = int(data.get("guests"))
 
     except (TypeError, ValueError):
-
-        return jsonify(
-            success=False,
-            message="Некорректные данные."
-        ), 400
+        return jsonify(success=False, message="Некорректные данные."), 400
 
     if not 2 <= len(name) <= 50:
-
-        return jsonify(
-            success=False,
-            message="Введите корректное имя."
-        ), 400
+        return jsonify(success=False, message="Введите корректное имя."), 400
 
     if not valid_phone(phone):
+        return jsonify(success=False, message="Введите корректный телефон."), 400
 
+    if table not in TABLES or guests < 1 or guests > TABLES[table]:
         return jsonify(
-            success=False,
-            message="Введите корректный телефон."
-        ), 400
-
-    if (
-        table not in TABLES
-        or
-        guests < 1
-        or
-        guests > TABLES[table]
-    ):
-
-        return jsonify(
-            success=False,
-            message="Стол не подходит для этого количества гостей."
+            success=False, message="Стол не подходит для этого количества гостей."
         ), 400
 
     if not table_is_active(table):
-        return jsonify(success=False, message="Этот стол временно недоступен для бронирования."), 409
+        return jsonify(
+            success=False, message="Этот стол временно недоступен для бронирования."
+        ), 409
 
     try:
-
-        reservation_datetime = datetime.strptime(
-            f"{date} {time}",
-            "%Y-%m-%d %H:%M"
-        )
+        reservation_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
 
     except ValueError:
-
-        return jsonify(
-            success=False,
-            message="Некорректная дата или время."
-        ), 400
+        return jsonify(success=False, message="Некорректная дата или время."), 400
 
     if reservation_datetime < datetime.now():
-
         return jsonify(
-            success=False,
-            message="Нельзя бронировать прошедшее время."
+            success=False, message="Нельзя бронировать прошедшее время."
         ), 400
 
-    if busy(
-        table,
-        date,
-        time
-    ):
-
+    if busy(table, date, time):
         return jsonify(
-            success=False,
-            message="Этот стол уже занят на выбранный период."
+            success=False, message="Этот стол уже занят на выбранный период."
         ), 409
 
     connection = db()
@@ -1077,8 +1397,7 @@ def create_reservation():
 
     if logged_in_user_id:
         logged_in_user = connection.execute(
-            "SELECT id, name, phone FROM users WHERE id = ?",
-            (logged_in_user_id,)
+            "SELECT id, name, phone FROM users WHERE id = ?", (logged_in_user_id,)
         ).fetchone()
 
         if (
@@ -1088,6 +1407,13 @@ def create_reservation():
         ):
             reservation_user_id = logged_in_user["id"]
 
+    payment_needed = requires_deposit(guests, table, bool(preorder_quantities))
+    initial_status = "pending_payment" if payment_needed else "confirmed"
+    deadline = (
+        (datetime.now() + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+        if payment_needed
+        else None
+    )
     cursor = connection.execute(
         """
         INSERT INTO reservations (
@@ -1100,9 +1426,9 @@ def create_reservation():
             status,
             user_id,
             special_requests,
-            comment
+            comment, payment_deadline
         )
-        VALUES (?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             table,
@@ -1111,10 +1437,12 @@ def create_reservation():
             guests,
             date,
             time,
+            initial_status,
             reservation_user_id,
             special_requests_text,
-            comment
-        )
+            comment,
+            deadline,
+        ),
     )
 
     reservation_id = cursor.lastrowid
@@ -1125,14 +1453,16 @@ def create_reservation():
         placeholders = ",".join("?" for _ in menu_ids)
         menu_rows = connection.execute(
             f"SELECT id, price FROM menu_items WHERE is_active = 1 AND id IN ({placeholders})",
-            menu_ids
+            menu_ids,
         ).fetchall()
         menu_by_id = {row["id"]: row for row in menu_rows}
 
         if len(menu_by_id) != len(menu_ids):
             connection.rollback()
             connection.close()
-            return jsonify(success=False, message="Одно из выбранных блюд больше недоступно."), 400
+            return jsonify(
+                success=False, message="Одно из выбранных блюд больше недоступно."
+            ), 400
 
         for menu_item_id, quantity in preorder_quantities.items():
             unit_price = menu_by_id[menu_item_id]["price"]
@@ -1142,27 +1472,41 @@ def create_reservation():
                 INSERT INTO reservation_items (reservation_id, menu_item_id, quantity, unit_price)
                 VALUES (?, ?, ?, ?)
                 """,
-                (reservation_id, menu_item_id, quantity, unit_price)
+                (reservation_id, menu_item_id, quantity, unit_price),
             )
 
         connection.execute(
             "UPDATE reservations SET preorder_status = 'new' WHERE id = ?",
-            (reservation_id,)
+            (reservation_id,),
         )
 
+    recipient = email_for_user(connection, reservation_user_id)
     connection.commit()
     connection.close()
+    if payment_needed:
+        session["guest_payment_ids"] = (
+            session.get("guest_payment_ids", []) + [reservation_id]
+        )[-20:]
+    else:
+        send_booking_email(
+            recipient,
+            "Бронирование TABLE подтверждено",
+            f"Ваша бронь №{reservation_id}: стол №{table}, {date} в {time}, гостей: {guests}.",
+        )
 
     return jsonify(
         success=True,
         reservation_id=reservation_id,
-        preorder_total=preorder_total
+        preorder_total=preorder_total,
+        payment_required=payment_needed,
+        payment_url=url_for("payment", rid=reservation_id) if payment_needed else None,
     )
 
 
 # =========================================================
 # МЕНЮ И ПРЕДЗАКАЗ БЛЮД
 # =========================================================
+
 
 @app.route("/api/menu", methods=["GET"])
 def get_menu():
@@ -1199,7 +1543,7 @@ def get_reservation_preorder(connection, reservation_id):
         WHERE ri.reservation_id = ?
         ORDER BY mi.category, mi.name
         """,
-        (reservation_id,)
+        (reservation_id,),
     ).fetchall()
     items = [dict(row) for row in rows]
     return items, sum(item["total"] for item in items)
@@ -1209,6 +1553,7 @@ def get_reservation_preorder(connection, reservation_id):
 # УПРАВЛЕНИЕ СТОЛИКАМИ ДЛЯ АДМИНА
 # =========================================================
 
+
 @app.route("/api/admin/tables", methods=["GET"])
 @admin_api_required
 def admin_tables():
@@ -1217,10 +1562,17 @@ def admin_tables():
         "SELECT table_number, capacity, is_active FROM table_settings ORDER BY table_number"
     ).fetchall()
     connection.close()
-    return jsonify(success=True, tables=[
-        {"table_number": row["table_number"], "capacity": row["capacity"], "is_active": bool(row["is_active"])}
-        for row in rows
-    ])
+    return jsonify(
+        success=True,
+        tables=[
+            {
+                "table_number": row["table_number"],
+                "capacity": row["capacity"],
+                "is_active": bool(row["is_active"]),
+            }
+            for row in rows
+        ],
+    )
 
 
 @app.route("/api/admin/tables/<int:table_number>/status", methods=["PATCH"])
@@ -1234,15 +1586,14 @@ def update_table_status(table_number):
         return jsonify(success=False, message="Некорректный статус столика."), 400
     connection = db()
     current = connection.execute(
-        "SELECT is_active FROM table_settings WHERE table_number = ?",
-        (table_number,)
+        "SELECT is_active FROM table_settings WHERE table_number = ?", (table_number,)
     ).fetchone()
     old_active = bool(current["is_active"]) if current else True
 
     connection.execute(
         "INSERT INTO table_settings (table_number, capacity, is_active) VALUES (?, ?, ?) "
         "ON CONFLICT(table_number) DO UPDATE SET capacity = excluded.capacity, is_active = excluded.is_active",
-        (table_number, TABLES[table_number], 1 if is_active else 0)
+        (table_number, TABLES[table_number], 1 if is_active else 0),
     )
 
     if old_active != is_active:
@@ -1253,7 +1604,7 @@ def update_table_status(table_number):
             table_number,
             f"Стол №{table_number}: {'включён' if is_active else 'отключён'}",
             "active" if old_active else "inactive",
-            "active" if is_active else "inactive"
+            "active" if is_active else "inactive",
         )
 
     connection.commit()
@@ -1265,10 +1616,8 @@ def update_table_status(table_number):
 # ПОЛУЧЕНИЕ ВСЕХ БРОНЕЙ ДЛЯ АДМИНА
 # =========================================================
 
-@app.route(
-    "/api/reservations",
-    methods=["GET"]
-)
+
+@app.route("/api/reservations", methods=["GET"])
 @admin_api_required
 def list_reservations():
 
@@ -1302,123 +1651,63 @@ def list_reservations():
     reservations = []
     for row in rows:
         reservation = dict(row)
-        preorder_items, preorder_total = get_reservation_preorder(connection, reservation["id"])
+        preorder_items, preorder_total = get_reservation_preorder(
+            connection, reservation["id"]
+        )
         reservation["preorder_items"] = preorder_items
         reservation["preorder_total"] = preorder_total
         reservations.append(reservation)
 
     connection.close()
 
-    return jsonify(
-        success=True,
-        reservations=reservations
-    )
+    return jsonify(success=True, reservations=reservations)
 
 
 # =========================================================
 # РЕДАКТИРОВАНИЕ БРОНИ АДМИНИСТРАТОРОМ
 # =========================================================
 
-@app.route(
-    "/api/reservations/<int:rid>",
-    methods=["PUT"]
-)
+
+@app.route("/api/reservations/<int:rid>", methods=["PUT"])
 @admin_api_required
 def update_reservation(rid):
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    data = request.get_json(silent=True) or {}
 
-    name = str(
-        data.get(
-            "customer_name",
-            ""
-        )
-    ).strip()
+    name = str(data.get("customer_name", "")).strip()
 
-    phone = str(
-        data.get(
-            "phone",
-            ""
-        )
-    ).strip()
+    phone = str(data.get("phone", "")).strip()
 
-    date = str(
-        data.get(
-            "reservation_date",
-            ""
-        )
-    ).strip()
+    date = str(data.get("reservation_date", "")).strip()
 
-    time = str(
-        data.get(
-            "reservation_time",
-            ""
-        )
-    ).strip()
+    time = str(data.get("reservation_time", "")).strip()
 
     try:
+        table = int(data.get("table_number"))
 
-        table = int(
-            data.get(
-                "table_number"
-            )
-        )
-
-        guests = int(
-            data.get(
-                "guests"
-            )
-        )
+        guests = int(data.get("guests"))
 
     except (TypeError, ValueError):
+        return jsonify(success=False, message="Некорректные данные."), 400
 
+    if not 2 <= len(name) <= 50 or not valid_phone(phone):
+        return jsonify(success=False, message="Проверьте имя и телефон."), 400
+
+    if table not in TABLES or guests < 1 or guests > TABLES[table]:
         return jsonify(
-            success=False,
-            message="Некорректные данные."
-        ), 400
-
-    if (
-        not 2 <= len(name) <= 50
-        or
-        not valid_phone(phone)
-    ):
-
-        return jsonify(
-            success=False,
-            message="Проверьте имя и телефон."
-        ), 400
-
-    if (
-        table not in TABLES
-        or
-        guests < 1
-        or
-        guests > TABLES[table]
-    ):
-
-        return jsonify(
-            success=False,
-            message="Стол не подходит для этого количества гостей."
+            success=False, message="Стол не подходит для этого количества гостей."
         ), 400
 
     if not table_is_active(table):
-        return jsonify(success=False, message="Этот стол временно отключён администратором."), 409
+        return jsonify(
+            success=False, message="Этот стол временно отключён администратором."
+        ), 409
 
     try:
-
-        datetime.strptime(
-            f"{date} {time}",
-            "%Y-%m-%d %H:%M"
-        )
+        datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
 
     except ValueError:
-
-        return jsonify(
-            success=False,
-            message="Некорректная дата или время."
-        ), 400
+        return jsonify(success=False, message="Некорректная дата или время."), 400
 
     connection = db()
 
@@ -1430,39 +1719,22 @@ def update_reservation(rid):
         FROM reservations
         WHERE id = ?
         """,
-        (rid,)
+        (rid,),
     ).fetchone()
 
     connection.close()
 
     if not reservation:
+        return jsonify(success=False, message="Бронь не найдена."), 404
 
+    if reservation["status"] in {"completed", "cancelled"}:
         return jsonify(
             success=False,
-            message="Бронь не найдена."
-        ), 404
-
-    if reservation["status"] in {
-        "completed",
-        "cancelled"
-    }:
-
-        return jsonify(
-            success=False,
-            message="Завершённую или отменённую бронь нельзя редактировать."
+            message="Завершённую или отменённую бронь нельзя редактировать.",
         ), 400
 
-    if busy(
-        table,
-        date,
-        time,
-        rid
-    ):
-
-        return jsonify(
-            success=False,
-            message="Стол уже занят."
-        ), 409
+    if busy(table, date, time, rid):
+        return jsonify(success=False, message="Стол уже занят."), 409
 
     connection = db()
 
@@ -1478,15 +1750,7 @@ def update_reservation(rid):
             reservation_time = ?
         WHERE id = ?
         """,
-        (
-            table,
-            name,
-            phone,
-            guests,
-            date,
-            time,
-            rid
-        )
+        (table, name, phone, guests, date, time, rid),
     )
 
     old_summary = (
@@ -1494,9 +1758,7 @@ def update_reservation(rid):
         f"{reservation['phone']}; гостей {reservation['guests']}; "
         f"{reservation['reservation_date']} {reservation['reservation_time']}"
     )
-    new_summary = (
-        f"Стол {table}; {name}; {phone}; гостей {guests}; {date} {time}"
-    )
+    new_summary = f"Стол {table}; {name}; {phone}; гостей {guests}; {date} {time}"
 
     if old_summary != new_summary:
         add_admin_log(
@@ -1506,45 +1768,30 @@ def update_reservation(rid):
             rid,
             f"Отредактировано бронирование #{rid}",
             old_summary,
-            new_summary
+            new_summary,
         )
 
     connection.commit()
     connection.close()
 
-    return jsonify(
-        success=True
-    )
+    return jsonify(success=True)
 
 
 # =========================================================
 # ИЗМЕНЕНИЕ СТАТУСА АДМИНИСТРАТОРОМ
 # =========================================================
 
-@app.route(
-    "/api/reservations/<int:rid>/status",
-    methods=["PATCH"]
-)
+
+@app.route("/api/reservations/<int:rid>/status", methods=["PATCH"])
 @admin_api_required
 def update_reservation_status(rid):
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    data = request.get_json(silent=True) or {}
 
-    new_status = str(
-        data.get(
-            "status",
-            ""
-        )
-    ).strip()
+    new_status = str(data.get("status", "")).strip()
 
     if new_status not in ALLOWED_STATUSES:
-
-        return jsonify(
-            success=False,
-            message="Недопустимый статус."
-        ), 400
+        return jsonify(success=False, message="Недопустимый статус."), 400
 
     connection = db()
 
@@ -1554,33 +1801,26 @@ def update_reservation_status(rid):
         FROM reservations
         WHERE id = ?
         """,
-        (rid,)
+        (rid,),
     ).fetchone()
 
     connection.close()
 
     if not reservation:
-
-        return jsonify(
-            success=False,
-            message="Бронь не найдена."
-        ), 404
+        return jsonify(success=False, message="Бронь не найдена."), 404
 
     if new_status in ACTIVE_STATUSES:
-
         if busy(
             reservation["table_number"],
             reservation["reservation_date"],
             reservation["reservation_time"],
-            rid
+            rid,
         ):
-
             return jsonify(
                 success=False,
                 message=(
-                    "Нельзя активировать бронь: "
-                    "стол уже занят другим бронированием."
-                )
+                    "Нельзя активировать бронь: стол уже занят другим бронированием."
+                ),
             ), 409
 
     connection = db()
@@ -1591,10 +1831,7 @@ def update_reservation_status(rid):
         SET status = ?
         WHERE id = ?
         """,
-        (
-            new_status,
-            rid
-        )
+        (new_status, rid),
     )
 
     if reservation["status"] != new_status:
@@ -1605,25 +1842,21 @@ def update_reservation_status(rid):
             rid,
             f"Изменён статус бронирования #{rid}",
             reservation["status"],
-            new_status
+            new_status,
         )
 
     connection.commit()
     connection.close()
 
-    return jsonify(
-        success=True
-    )
+    return jsonify(success=True)
 
 
 # =========================================================
 # ИЗМЕНЕНИЕ СТАТУСА ПРЕДЗАКАЗА АДМИНИСТРАТОРОМ
 # =========================================================
 
-@app.route(
-    "/api/admin/reservations/<int:rid>/preorder-status",
-    methods=["PATCH"]
-)
+
+@app.route("/api/admin/reservations/<int:rid>/preorder-status", methods=["PATCH"])
 @admin_api_required
 def update_preorder_status(rid):
 
@@ -1635,8 +1868,7 @@ def update_preorder_status(rid):
 
     connection = db()
     reservation = connection.execute(
-        "SELECT id, preorder_status FROM reservations WHERE id = ?",
-        (rid,)
+        "SELECT id, preorder_status FROM reservations WHERE id = ?", (rid,)
     ).fetchone()
 
     if not reservation:
@@ -1644,8 +1876,7 @@ def update_preorder_status(rid):
         return jsonify(success=False, message="Бронирование не найдено."), 404
 
     preorder_exists = connection.execute(
-        "SELECT id FROM reservation_items WHERE reservation_id = ? LIMIT 1",
-        (rid,)
+        "SELECT id FROM reservation_items WHERE reservation_id = ? LIMIT 1", (rid,)
     ).fetchone()
 
     if not preorder_exists:
@@ -1653,8 +1884,7 @@ def update_preorder_status(rid):
         return jsonify(success=False, message="У этой брони нет предзаказа."), 400
 
     connection.execute(
-        "UPDATE reservations SET preorder_status = ? WHERE id = ?",
-        (new_status, rid)
+        "UPDATE reservations SET preorder_status = ? WHERE id = ?", (new_status, rid)
     )
 
     if reservation["preorder_status"] != new_status:
@@ -1665,7 +1895,7 @@ def update_preorder_status(rid):
             rid,
             f"Изменён статус предзаказа для бронирования #{rid}",
             reservation["preorder_status"],
-            new_status
+            new_status,
         )
 
     connection.commit()
@@ -1678,10 +1908,8 @@ def update_preorder_status(rid):
 # СТАРЫЙ МАРШРУТ ОТМЕНЫ ДЛЯ АДМИНКИ
 # =========================================================
 
-@app.route(
-    "/api/reservations/<int:rid>/cancel",
-    methods=["PATCH"]
-)
+
+@app.route("/api/reservations/<int:rid>/cancel", methods=["PATCH"])
 @admin_api_required
 def cancel(rid):
 
@@ -1689,21 +1917,17 @@ def cancel(rid):
 
     reservation = connection.execute(
         """
-        SELECT id, status
+        SELECT id, status, user_id
         FROM reservations
         WHERE id = ?
         """,
-        (rid,)
+        (rid,),
     ).fetchone()
 
     if not reservation:
-
         connection.close()
 
-        return jsonify(
-            success=False,
-            message="Бронь не найдена."
-        ), 404
+        return jsonify(success=False, message="Бронь не найдена."), 404
 
     connection.execute(
         """
@@ -1712,7 +1936,7 @@ def cancel(rid):
             payment_status = CASE WHEN payment_status = 'paid' THEN 'refunded' ELSE payment_status END
         WHERE id = ?
         """,
-        (rid,)
+        (rid,),
     )
 
     if reservation["status"] != "cancelled":
@@ -1723,20 +1947,25 @@ def cancel(rid):
             rid,
             f"Бронирование #{rid} отменено администратором",
             reservation["status"],
-            "cancelled"
+            "cancelled",
         )
 
+    recipient = email_for_user(connection, reservation["user_id"])
     connection.commit()
     connection.close()
-
-    return jsonify(
-        success=True
+    send_booking_email(
+        recipient,
+        "Отмена бронирования TABLE",
+        f"Бронирование №{rid} отменено администратором.",
     )
+
+    return jsonify(success=True)
 
 
 # =========================================================
 # ЖУРНАЛ ДЕЙСТВИЙ АДМИНИСТРАТОРА
 # =========================================================
+
 
 @app.route("/api/admin/logs", methods=["GET"])
 @admin_api_required
@@ -1753,7 +1982,7 @@ def admin_logs():
         ORDER BY id DESC
         LIMIT ?
         """,
-        (limit,)
+        (limit,),
     ).fetchall()
     connection.close()
 
@@ -1764,48 +1993,24 @@ def admin_logs():
 # МОЯ БРОНЬ — ПОИСК ПО ID И ТЕЛЕФОНУ
 # =========================================================
 
-@app.route(
-    "/api/my-reservation",
-    methods=["POST"]
-)
+
+@app.route("/api/my-reservation", methods=["POST"])
 def my_reservation():
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    data = request.get_json(silent=True) or {}
 
     try:
-
-        reservation_id = int(
-            data.get(
-                "reservation_id"
-            )
-        )
+        reservation_id = int(data.get("reservation_id"))
 
     except (TypeError, ValueError):
+        return jsonify(success=False, message="Введите корректный номер брони."), 400
 
-        return jsonify(
-            success=False,
-            message="Введите корректный номер брони."
-        ), 400
-
-    phone = str(
-        data.get(
-            "phone",
-            ""
-        )
-    ).strip()
+    phone = str(data.get("phone", "")).strip()
 
     if not valid_phone(phone):
+        return jsonify(success=False, message="Введите корректный номер телефона."), 400
 
-        return jsonify(
-            success=False,
-            message="Введите корректный номер телефона."
-        ), 400
-
-    entered_phone = normalize_phone(
-        phone
-    )
+    entered_phone = normalize_phone(phone)
 
     connection = db()
 
@@ -1826,73 +2031,49 @@ def my_reservation():
         FROM reservations
         WHERE id = ?
         """,
-        (reservation_id,)
+        (reservation_id,),
     ).fetchone()
 
     connection.close()
 
     if not reservation:
+        return jsonify(success=False, message="Бронирование не найдено."), 404
 
-        return jsonify(
-            success=False,
-            message="Бронирование не найдено."
-        ), 404
-
-    saved_phone = normalize_phone(
-        reservation["phone"]
-    )
+    saved_phone = normalize_phone(reservation["phone"])
 
     if saved_phone != entered_phone:
-
         return jsonify(
-            success=False,
-            message="Номер брони или телефон указан неверно."
+            success=False, message="Номер брони или телефон указан неверно."
         ), 404
 
     reservation_data = dict(reservation)
     connection = db()
-    preorder_items, preorder_total = get_reservation_preorder(connection, reservation_id)
+    preorder_items, preorder_total = get_reservation_preorder(
+        connection, reservation_id
+    )
     connection.close()
     reservation_data["preorder_items"] = preorder_items
     reservation_data["preorder_total"] = preorder_total
 
-    return jsonify(
-        success=True,
-        reservation=reservation_data
-    )
+    return jsonify(success=True, reservation=reservation_data)
 
 
 # =========================================================
 # МОЯ БРОНЬ — ОТМЕНА ПОСЕТИТЕЛЕМ
 # =========================================================
 
-@app.route(
-    "/api/my-reservation/<int:rid>/cancel",
-    methods=["POST"]
-)
+
+@app.route("/api/my-reservation/<int:rid>/cancel", methods=["POST"])
 def cancel_my_reservation(rid):
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    data = request.get_json(silent=True) or {}
 
-    phone = str(
-        data.get(
-            "phone",
-            ""
-        )
-    ).strip()
+    phone = str(data.get("phone", "")).strip()
 
     if not valid_phone(phone):
+        return jsonify(success=False, message="Введите корректный номер телефона."), 400
 
-        return jsonify(
-            success=False,
-            message="Введите корректный номер телефона."
-        ), 400
-
-    entered_phone = normalize_phone(
-        phone
-    )
+    entered_phone = normalize_phone(phone)
 
     connection = db()
 
@@ -1903,91 +2084,64 @@ def cancel_my_reservation(rid):
             phone,
             reservation_date,
             reservation_time,
-            status
+            status,
+            user_id
         FROM reservations
         WHERE id = ?
         """,
-        (rid,)
+        (rid,),
     ).fetchone()
 
     if not reservation:
-
         connection.close()
 
-        return jsonify(
-            success=False,
-            message="Бронирование не найдено."
-        ), 404
+        return jsonify(success=False, message="Бронирование не найдено."), 404
 
-    saved_phone = normalize_phone(
-        reservation["phone"]
-    )
+    saved_phone = normalize_phone(reservation["phone"])
 
     if saved_phone != entered_phone:
-
         connection.close()
 
         return jsonify(
-            success=False,
-            message="Номер брони или телефон указан неверно."
+            success=False, message="Номер брони или телефон указан неверно."
         ), 403
 
     if reservation["status"] == "cancelled":
-
         connection.close()
 
-        return jsonify(
-            success=False,
-            message="Это бронирование уже отменено."
-        ), 400
+        return jsonify(success=False, message="Это бронирование уже отменено."), 400
 
     if reservation["status"] == "completed":
-
         connection.close()
 
         return jsonify(
-            success=False,
-            message="Завершённое бронирование нельзя отменить."
+            success=False, message="Завершённое бронирование нельзя отменить."
         ), 400
 
     if reservation["status"] == "arrived":
-
         connection.close()
 
         return jsonify(
             success=False,
-            message=(
-                "После прибытия гостя бронирование "
-                "нельзя отменить через сайт."
-            )
+            message=("После прибытия гостя бронирование нельзя отменить через сайт."),
         ), 400
 
     try:
-
         reservation_datetime = datetime.strptime(
-            (
-                f"{reservation['reservation_date']} "
-                f"{reservation['reservation_time']}"
-            ),
-            "%Y-%m-%d %H:%M"
+            (f"{reservation['reservation_date']} {reservation['reservation_time']}"),
+            "%Y-%m-%d %H:%M",
         )
 
     except ValueError:
-
         connection.close()
 
-        return jsonify(
-            success=False,
-            message="Ошибка данных бронирования."
-        ), 500
+        return jsonify(success=False, message="Ошибка данных бронирования."), 500
 
     if reservation_datetime < datetime.now():
-
         connection.close()
 
         return jsonify(
-            success=False,
-            message="Прошедшее бронирование нельзя отменить."
+            success=False, message="Прошедшее бронирование нельзя отменить."
         ), 400
 
     connection.execute(
@@ -1997,16 +2151,17 @@ def cancel_my_reservation(rid):
             payment_status = CASE WHEN payment_status = 'paid' THEN 'refunded' ELSE payment_status END
         WHERE id = ?
         """,
-        (rid,)
+        (rid,),
     )
 
+    recipient = email_for_user(connection, reservation["user_id"])
     connection.commit()
     connection.close()
-
-    return jsonify(
-        success=True,
-        message="Бронирование успешно отменено."
+    send_booking_email(
+        recipient, "Отмена бронирования TABLE", f"Бронирование №{rid} отменено."
     )
+
+    return jsonify(success=True, message="Бронирование успешно отменено.")
 
 
 # =========================================================
@@ -2014,9 +2169,6 @@ def cancel_my_reservation(rid):
 # =========================================================
 
 if __name__ == "__main__":
-
     init_db()
 
-    app.run(
-        debug=True
-    )
+    app.run(debug=os.environ.get("FLASK_DEBUG", "0") == "1")
