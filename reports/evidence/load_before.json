@@ -1,0 +1,10 @@
+{
+  "users": 200,
+  "requests": 600,
+  "errors": 0,
+  "duration_seconds": 20.594581536000078,
+  "rps": 29.133876740888287,
+  "p50_ms": 2582.4521430001823,
+  "p95_ms": 15681.12606700015,
+  "scope": "600 read-only local requests, synthetic DB, Werkzeug threaded server; excludes browser rendering and writes"
+}

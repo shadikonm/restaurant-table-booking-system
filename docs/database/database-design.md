@@ -1,25 +1,3 @@
-# Проектирование базы данных
+# Текущая база TABLE
 
-## 1. СУБД
-
-В проекте используется SQLite.
-
-Файл базы данных:
-
-`restaurant.db`
-
-База данных используется для хранения пользователей и бронирований ресторана.
-
----
-
-# 2. Таблица users
-
-```sql
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+SQLite restaurant.db, создаётся init_db. Основные таблицы: users, reservations, table_settings, menu_items, reservation_items, admin_logs, email_reminders. Связи:user→reservations;reservation→reservation_items→menu_items. PostgreSQL был исходным планом, изменение зафиксированоADR-002. Пересечения активных броней и переходы обязательной оплаты контролируют триггерыdb_integrity.py. База и backups не публикуются.

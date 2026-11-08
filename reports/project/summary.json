@@ -1,0 +1,65 @@
+{
+  "total": 43,
+  "open": 2,
+  "closed": 41,
+  "periods": [
+    {
+      "start": "2026-09-27",
+      "end": "2026-10-03",
+      "closed": 20,
+      "issue_numbers": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        8,
+        26,
+        27,
+        28,
+        29,
+        30,
+        32,
+        33,
+        34,
+        35,
+        38,
+        39,
+        40,
+        42,
+        44
+      ],
+      "cycle_time": null,
+      "p85_cycle_time": null
+    },
+    {
+      "start": "2026-10-04",
+      "end": "2026-10-10",
+      "closed": 19,
+      "issue_numbers": [
+        3,
+        7,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        25,
+        43
+      ],
+      "cycle_time": null,
+      "p85_cycle_time": null
+    }
+  ],
+  "limitation": "Closure events are measured; historical In Progress and Review transitions are unavailable. Lead time since creation is not cycle time."
+}

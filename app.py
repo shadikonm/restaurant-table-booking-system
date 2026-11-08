@@ -1102,6 +1102,12 @@ def table_is_active(table_number):
 def expire_unpaid_bookings():
     """Release unpaid provisional bookings after 15 minutes."""
     with closing(db()) as conn:
+        now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if not conn.execute(
+            "SELECT 1 FROM reservations WHERE status='pending_payment' AND payment_deadline < ? LIMIT 1",
+            (now_text,),
+        ).fetchone():
+            return
         conn.execute(
             """UPDATE reservations SET status='cancelled'
                         WHERE status='pending_payment' AND payment_deadline IS NOT NULL
@@ -1249,15 +1255,29 @@ def availability():
         table_number for table_number, capacity in TABLES.items() if capacity < guests
     ]
 
-    disabled_tables = [
-        table_number for table_number in TABLES if not table_is_active(table_number)
-    ]
-
+    expire_unpaid_bookings()
+    with closing(db()) as connection:
+        disabled_tables = [
+            row["table_number"]
+            for row in connection.execute(
+                "SELECT table_number FROM table_settings WHERE is_active = 0"
+            )
+        ]
+        occupied = {
+            row["table_number"]
+            for row in connection.execute(
+                """SELECT table_number FROM reservations
+               WHERE status IN ('confirmed','arrived','pending_payment')
+               AND julianday(reservation_date || ' ' || reservation_time)
+                   < julianday(?, '+2 hours')
+               AND julianday(?) < julianday(reservation_date || ' ' || reservation_time, '+2 hours')""",
+                (f"{date} {time}", f"{date} {time}"),
+            )
+        }
     busy_tables = [
-        table_number
-        for table_number, capacity in TABLES.items()
-        if capacity >= guests
-        and (table_number in disabled_tables or busy(table_number, date, time))
+        number
+        for number, capacity in TABLES.items()
+        if capacity >= guests and (number in disabled_tables or number in occupied)
     ]
 
     return jsonify(

@@ -10,8 +10,7 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 export ADMIN_USERNAME=admin
-read -s -p 'Пароль администратора: ' ADMIN_PASSWORD; echo
-export ADMIN_PASSWORD
+export ADMIN_PASSWORD="$(python -c 'import getpass; print(getpass.getpass("Пароль администратора: "))')"
 python app.py
 ```
 
